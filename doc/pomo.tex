@@ -19,6 +19,7 @@
 \newcommand{\numSp}{\ensuremath{M}}
 \newcommand{\numObsStates}{\ensuremath{k}}
 \newcommand{\virtPopSize}{\ensuremath{N}}
+\newcommand{\polyProb}{\ensuremath{\pi_{\mbox{pol}}}}
 \newcommand{\pomo}{PoMo\xspace}
 % from http://tex.stackexchange.com/a/33547
 \newcommand{\appropto}{\mathrel{\vcenter{
@@ -87,8 +88,54 @@ The drift process is reversible.
 Evolutionary trajectories that involve a species being polymorphic for than one allele are clearly 
     biologically possible, but are prohibited to reduce the size of the state space.
     The state space of evolution in \pomo is: $\numObsStates + {\numObsStates \choose 2} \left(\virtPopSize - 1\right)$
+
+\section{notation}
+Just reiterating this from  \cite{DeMaioSK2013} for convenience:
+\begin{compactitem}
+\item[$\bullet$] $\virtPopSize$ the virtual population size.
+\item[$\bullet$] $M_{IJ}^{i,k}$ the instantaneous rate of change from having the state corresponding to having $i$ copies of allele $I$ and $N-i$ copeies of $J$ to having $k$ copies of $I$ and $N-k$ copeies of $J$
+\item[$\bullet$] $\polyProb$ is the {\em a priori} probability of being in a polymorphic state at the root.
+\item[$\bullet$] $s_I$ the selection coefficient of the allele with state $I$.
+\end{compactitem}
+
+\section{A time-reversible form of \pomo}
+The constraint of time-reversibility is that, $\forall X \neq Y$:
+\begin{eqnarray}
+    \pi_X q_{XY} = \pi_Y q_{YX}
+\end{eqnarray}
+were $\pi_X$ is the equilibrium state frequency of $X$, and $q_{XY}$ is the instantaneous
+    rate of that an element of state $X$ tranitions to one of state $Y$.
+This enables the refactoring into:
+\begin{eqnarray}
+    \pi_X q_{XY} & = & \pi_Y q_{YX} \\
+    q_{XY} & = & r_{XY}\pi_Y \\
+    q_{YX} & = & r_{XY}\pi_X
+\end{eqnarray}
+to emphasize the existence of a symmetric factor in the rate matrix, $r_{XY}$, multipled by the destination state frequency.
+
+We can most clearly see that \pomo does not fit easily into a time-reversible framework by considering 
+    the transition $M_{IJ}^{0,1}$ vs $M_{IJ}^{1,0}$. 
+The former should be a very low rate constant reflecting the mutation rate.
+The latter involves the fixation of an allele at very high frequency.
+As Table S9 of  \cite{DeMaioSK2013} shows, these rates have different functional forms with respect to $N$ (the former is $N^2$; the latter is a function of $N^{-1}$).
+
+Nevertheless, we can create \pomo-inspired reversible model by using
+    $s_I= s_J$ for all $I$ and $J$, and then using the Eqn (4) of \cite{DeMaioSK2013}
+    as the basis for the equilibrium state frequencies:
+\begin{eqnarray}
+\pi_{IJ}^i & = & \frac{\polyProb}{K_{\mbox{norm}}}\left(
+    \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right) \\
+    K_{\mbox{norm}} & = & \sum_I \sum_{J\neq I}\sum_{i=1}^{N-1} \left(
+    \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right)
+\end{eqnarray}
+
+
+ 
+
+
 \bibliographystyle{splncs03}
 \bibliography{pomo}
+
 
 
 
