@@ -1,0 +1,82 @@
+% This is LLNCS.DEM the demonstration file of
+% the LaTeX macro package from Springer-Verlag
+% for Lecture Notes in Computer Science,
+% version 2.4 for LaTeX2e as of 16. April 2010
+%
+\documentclass{llncs}
+%
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{pdfpages}
+\usepackage{graphicx}
+\usepackage{paralist}
+\usepackage{xspace}
+\usepackage{paralist}
+\usepackage{bm}
+\usepackage{algorithm,algorithmic}
+\newcommand{\numOTUs}{\ensuremath{L}}
+\newcommand{\numSites}{\ensuremath{K}}
+\newcommand{\numSp}{\ensuremath{M}}
+\newcommand{\numObsStates}{\ensuremath{k}}
+\newcommand{\virtPopSize}{\ensuremath{N}}
+\newcommand{\pomo}{PoMo\xspace}
+% from http://tex.stackexchange.com/a/33547
+\newcommand{\appropto}{\mathrel{\vcenter{
+              \offinterlineskip\halign{\hfil$##$\cr
+                      \propto\cr\noalign{\kern2pt}\sim\cr\noalign{\kern-2pt}}}}}
+\DeclareMathOperator*{\argmax}{\arg\!\max}
+\usepackage{hyperref}
+\hypersetup{backref,  linkcolor=blue, citecolor=red, colorlinks=true, hyperindex=true}
+%
+\begin{document}
+\title{POMO implementation}
+\titlerunning{POMO implementation}
+\author{Author 1\inst{1} \and Author 2\inst{1} \and Author 3\inst{1,2}}
+\authorrunning{Author 1 et al.} % abbreviated author list
+\tocauthor{Author 1, Author 2}
+\institute{Institute 1\\
+\email{\{Authors\}@h-its.org} \and Institute 2,\\ Address, Country\\
+\email{Author3@h-its.org}}
+%% Eumerating parts in aligned environments %%
+\newcommand\enum{\addtocounter{equation}{1}\tag{\theequation}}
+\maketitle              % typeset the title of the contribution
+\section {Introduction}
+DeMaio, Schl\"otterer, and Kosiol \cite{DeMaioSK2013} introduced a clever approach to dealing with polymorphism in the context of
+    phylogenetic estimation.
+Rather than explicitly treating the gene genealogy of a locus as a nuisance parameter, their polymorphism-aware
+    phylogenetic model (\pomo) uses hidden state approach to model the frequency of residues for a site.
+
+Input: Each of $\numOTUs$ OTUs is assumed to have sequence data from $\numSites$ sites and be mapped to one of $\numSp$ species.
+
+The number of states of the data is $\numObsStates$. 
+The model is described for DNA data ($\numObsStates=4$), but could be used for other small values of $\numObsStates$ if
+    the process of fixation of a new state is assumed to be similiar to the genetic drift/selection as modelled by \pomo.
+
+The model treats the evolution of each site as a continuous-time Markov process with a larger state space which
+    includes states that correspond to the species being monomorphic for each of the $\numObsStates$ but als
+    considers states representing polymorphic states in which 2 alleles occur at differing frequencies.
+The continuous frequency of one allele in a population is binned for computational convenience.
+This is done by imagining a virtual population of size $\virtPopSize$.
+
+The process one residue replacing another would consists of:
+\begin{compactenum}
+\item A mutation such that the new allele has frequency $1/\virtPopSize$,
+\item pass through each of the other polymorphic bins for this pair, $\{2/\virtPopSize, 3/\virtPopSize,\ldots,(\virtPopSize-1)/\virtPopSize, 1\}$
+    where a frequency of 1 corresponds to the state that maps to the new allele's ``observable'' state being fixed.
+\end{compactenum}
+The drift process is reversible.
+
+Evolutionary trajectories that involve a species being polymorphic for than one allele are clearly 
+    biologically possible, but are prohibited to reduce the size of the state space.
+    The state space of evolution in \pomo is: $\numObsStates + {\numObsStates \choose 2} \left(\virtPopSize - 1\right)$
+\bibliographystyle{splncs03}
+\bibliography{pomo}
+
+
+
+\end{document}
+
+\begin{algorithm} \caption{}\label{}
+\begin{algorithmic}
+\end{algorithmic}
+\end{algorithm}
