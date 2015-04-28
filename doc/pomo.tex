@@ -29,17 +29,35 @@
 \hypersetup{backref,  linkcolor=blue, citecolor=red, colorlinks=true, hyperindex=true}
 %
 \begin{document}
-\title{POMO implementation}
+\title{A \pomo-like model for large-scale phylogenetics}
 \titlerunning{POMO implementation}
-\author{Author 1\inst{1} \and Author 2\inst{1} \and Author 3\inst{1,2}}
+\author{Mark T.~Holder\inst{1,2}\and Alexandros Stamatakis\inst{1,3}}
 \authorrunning{Author 1 et al.} % abbreviated author list
-\tocauthor{Author 1, Author 2}
-\institute{Institute 1\\
-\email{\{Authors\}@h-its.org} \and Institute 2,\\ Address, Country\\
-\email{Author3@h-its.org}}
+%\tocauthor{Author 1, Author 2}
+\institute{1. HITS gGmbH,\\2. Univ.~Kansas\\3. KIT}\\
+%\email{\{Authors\}@h-its.org} \and Institute 2,\\ Address, Country\\
+%\email{Author3@h-its.org}}
 %% Eumerating parts in aligned environments %%
 \newcommand\enum{\addtocounter{equation}{1}\tag{\theequation}}
 \maketitle              % typeset the title of the contribution
+\section {Motivation}
+Large scale phylogenetic studies feature large numbers of species sampled with relatively few
+    individuals sampled per species.
+This sampling strategy make it difficult to examine the history of gene geneaologies with great precision, but 
+    discordance between gene trees and species trees motivates the need for developing methods
+    that recognize that polymorphism at the time of speciation can result in patterns of fixation
+    that look like homoplasy when mapped onto the species tree.
+
+The \pomo model of \cite{DeMaioSK2013} provides an elegant approximate method for dealing with polymorphism 
+    on species trees.
+However, the model is more general that needed for many phylogenetic purposes\footnote{or at least we {\em hope} that
+    one need not implement such a rich model for the purpose of estimating trees in most cases.} and
+    they formulate the model without the constraint of time reversibility.
+The lack of time reversibility adds realism, but necessitates the use of rooted tree representations (furthermore
+    the infer new parameters to describe the frequency of states at the root).
+
+Here we develop a time-reversible that borrows ideas from the \pomo model, but is more amenable to 
+    implementation in ExaML \cite{ExaMLInitial,ExaMLLatest}.
 \section {Introduction}
 DeMaio, Schl\"otterer, and Kosiol \cite{DeMaioSK2013} introduced a clever approach to dealing with polymorphism in the context of
     phylogenetic estimation.
