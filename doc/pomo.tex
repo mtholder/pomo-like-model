@@ -93,7 +93,7 @@ Evolutionary trajectories that involve a species being polymorphic for than one 
 Just reiterating this from  \cite{DeMaioSK2013} for convenience:
 \begin{compactitem}
 \item[$\bullet$] $\virtPopSize$ the virtual population size.
-\item[$\bullet$] $M_{IJ}^{i,k}$ the instantaneous rate of change from having the state corresponding to having $i$ copies of allele $I$ and $N-i$ copeies of $J$ to having $k$ copies of $I$ and $N-k$ copeies of $J$
+\item[$\bullet$] $M_{IJ}^{i,k}$ the instantaneous rate of change from having the state corresponding to having $i$ copies of allele $I$ and $N-i$ copeies of $J$ to having $k$ copies of $I$ and $N-k$ copies of $J$
 \item[$\bullet$] $\polyProb$ is the {\em a priori} probability of being in a polymorphic state at the root.
 \item[$\bullet$] $s_I$ the selection coefficient of the allele with state $I$.
 \end{compactitem}
@@ -124,10 +124,12 @@ Nevertheless, we can create \pomo-inspired reversible model by using
     as the basis for the equilibrium state frequencies:
 \begin{eqnarray}
 \pi_{IJ}^i & = & \frac{\polyProb}{K_{\mbox{norm}}}\left(
-    \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right) \\
+    \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right) \hskip 4em \forall i: 0<i<N \\
     K_{\mbox{norm}} & = & \sum_I \sum_{J\neq I}\sum_{i=1}^{N-1} \left(
     \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right)
 \end{eqnarray}
+with the equilibrium frequency of being monomorphic for state $I$ is
+$\pi_I(1-\polyProb)$ as assumed for the root state frequencies (on page 2259 of \cite{DeMaioSK2013}).
 
 
  
