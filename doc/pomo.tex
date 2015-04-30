@@ -275,8 +275,20 @@ If $Z_m^{(k)}$ is a diallelic code for with the first state denoted $Z_I$ and th
      Note that the ``choose'' factor and the $ \virtPopSize^{-S_m^{(k)}}$ factors are constant for all values of $i$. So it could be dropped (because the likelihood need only be proportional to the probability of the data under the model).
 \end{compactitem}
 
-%$C_m^{(k)}[I]$
 
+\subsection*{$Z_m^{(k)}$ is Monomorphic}
+If $Z_m^{(k)}$ is a monomorphic code for the state $Z_I$ then:
+\begin{compactitem}
+    \item[$\bullet$] $C_m^{(k)}[I] = 0$ if $I\neq Z_I$
+    \item[$\bullet$] $C_m^{(k)}[I] = 1$ if $I = Z_I$
+    \item[$\bullet$] $C_m^{(k)}[^{\ast}_{IJ}] = 0$  if $I\neq Z_I$ and $J\neq Z_I$
+    \item[$\bullet$] if $I = Z_I$
+     $$C_m^{(k)}[^{i}_{IJ}] = \left(\frac{\virtPopSize - i}{\virtPopSize}\right)^{S_m^{(k)}}$$
+    \item[$\bullet$] if $J = Z_I$, then
+        $$C_m^{(k)}[^{i}_{IJ}] = \left(\frac{i}{\virtPopSize}\right)^{S_m^{(k)}}$$
+\end{compactitem}
+Note that the $ \virtPopSize^{-S_m^{(k)}}$ factors are constant for all values of $i$, but they 
+     {\em cannot} be omitted because it does not occur in the $C_m^{(k)}[I]$ case.
 
 
 
