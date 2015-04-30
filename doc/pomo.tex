@@ -133,7 +133,13 @@ $\pi_I(1-\polyProb)$ as assumed for the root state frequencies (on page 2259 of 
 
 Setting $s_I=s_J$ simplifies eqn (1) and (2) of \cite{DeMaioSK2013} to:
 \begin{eqnarray}
- $M_{IJ}^{i,i+1}$  = $M_{IJ}^{i,i-1}$ & = & \frac{i(N-i)}{N^2}
+ M_{IJ}^{i,i+1}  = M_{IJ}^{i,i-1} & = & \frac{i(N-i)}{N^2}
+\end{eqnarray}
+with the corresponding elements of the $Q$-matrix for 
+    transititions between polymorphic states are simply
+    these elements multiplied by $N$:
+\begin{eqnarray}
+    Q_{IJ}^{i,i+1}  = Q_{IJ}^{i,i-1} & = & \frac{i(N-i)}{N} \label{polyQPair}
 \end{eqnarray}
 
 If we further think of the state frequencies being driven by a mutation rate composed of a product
@@ -148,8 +154,16 @@ then equation \ref{stateFreqPoly} becomes:
       & = & \frac{\polyProb}{K_{\mbox{norm}}}\left( \frac{N\pi_I\pi_J\mu_{IJ}}{i(N-i)}\right) \nonumber
 \end{eqnarray}
 
-An MLE of $\polyProb$ could not be reliably estimated by \cite{DeMaioSK2013}, presumably because it only
-    affects the likelihood via its affect on the weighting of states at the root.
+We can verify the time-reversibility of the $Q$-matrix in \ref{polyQPair} for the $i$ and $i+1$ pair:
+\begin{eqnarray}
+    \pi_{IJ}^i Q_{IJ}^{i,i+1} & = & \pi_{IJ}^{i+1} Q_{IJ}^{i+1,i} \nonumber \\
+    \left( \frac{N\pi_I\pi_J\mu_{IJ}}{i(N-i)}\right) \left(\frac{i(N-i)}{N}\right) & = & \left( \frac{N\pi_I\pi_J\mu_{IJ}}{(i+1)(N-i-1)}\right)\left(\frac{(1+i)(N-i-1)}{N}\right) \nonumber
+\end{eqnarray}
+
+
+
+%An MLE of $\polyProb$ could not be reliably estimated by \cite{DeMaioSK2013}, presumably because it only
+%    affects the likelihood via its affect on the weighting of states at the root.
 
 
 
