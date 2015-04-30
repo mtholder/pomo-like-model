@@ -206,11 +206,82 @@ The free parameters are:
 The variables which appear in the model, but which are not parameters in the statistical sense:
 \begin{compactitem}
     \item[$\bullet$] $\virtPopSize$, the virtual population size. the number of states scales linearly with this.
-    This binning terms controls the accuracy of the approximation to continuous model
+    This binning terms controls the accuracy of the approximation to continuous model 
     \item[$\bullet$] $\pi_{IJ}^{(i)}$ - a deterministic funtion of the parameters and \virtPopSize. See Eqns \ref{polyStateFreqSimplified} and \ref{monoStateFreq}.
     \item[$\bullet$] $\Knorm$ - a deterministic funtion of the parameters and \virtPopSize. See Eqn(\ref{KnormDef}).
 \end{compactitem}
 
+\section{Transforming data}
+We have sample $M$ species, and have $S_m$ individuals sampled from species $m$.
+Assuming that each site is a random draw from the species current state is simple, though it ignores
+    linkage disequilibrium between sites.
+
+We can recode the $S_m$ sequences for species $m$ into a vector of tuples, $X_m^{(kk)}$ which 
+    summarizes all of the sequence data for species $m$ at site $k$.
+
+Each tuple has two or three elements.
+
+The first element, $Z_m^{(k)}$, is an {\tt enum} style type designator which specifies what nucleotides are observed.
+The valid facets for this {\tt enum} are: \texttt{A}, \texttt{C}, \texttt{G}, \texttt{T}, \texttt{AC}, \texttt{AG}, \texttt{AT}, \texttt{CG}, \texttt{CT}, and \texttt{GT}, \texttt{Missing}.
+The first 4 describe sites that are monomorphic in a species.
+The next six are the diallelic states.
+The final state is used if none of the sequences from the species is scored for all sites.
+
+If any species displays $>2$ states, then the likelihood will be 0 under our \pomo-like model.
+So the processing should abort.
+
+Let $S_m^{(k)}$ denote $S_m$ minus the number of sequences from species $m$ that have a missing data code at site $k$. 
+So $S_m^{(k)}$ is the species sampling at this site.
+
+If the type designator is monomorphic, then the other element of the tuple is $Y_m^{(k,0)}$, which is the number of sequences sampled from species $m$ that display the indicated state at site $k$.
+$Y_m^{(k,0)}$ will be $S_m^{(k)}$.
+
+
+If the type designator is diallelic, then there will be a two integers $Y_m^{(k,0)}$ and $Y_m^{(k,1)}$.
+They will sum to $S_m^{(k)}$, and they will simply be the count of sequences for this species that display the first and second state specified by the type designator.
+
+The phylogenetic tree will represent the $M$ species.
+
+The conditional likelihood value (aka ``partial likelihood value'') for species $m$ and site $k$ will be constant through the analysis.
+So the following values can be calculated upfront and stored in a constant cache;
+with $C_m^{(k)}$ indicating the values for species $m$ and site $k$.
+
+Up to this point, we have not established an ordering of the states of the \pomo-like model.
+
+Here, we'll use the syntax $C_m^{(k)}[^{i}_{IJ}]$ will be used to indicate the element of 
+    the tip partial likelihood that corresponds to a diallelic state for nucleotides $I$ and $J$
+    with $i$ virtual individuals in state $J$ and $N-i$ individual in state $J$.
+
+$C_m^{(k)}[I]$ will be used to indicate the element of 
+    the tip partial likelihood that corresponds to a monomorphic state with all $\virtPopSize$
+    individuals corresponding to state $I$.
+
+We'll also use $\ast$ as a wildcard in this partial likelihood indexing.
+
+\subsection*{$Z_m^{(k)}$ is \texttt{Missing}}
+If $Z_m^{(k)}$ is \texttt{Missing}, then all elements of $C_m^{(k)}$ will be set to a probability of 1. So
+\begin{compactitem}
+    \item[$\bullet$] $C_m^{(k)}[\ast]=1.0$
+\end{compactitem}
+
+\subsection*{$Z_m^{(k)}$ is Diallelic}
+If $Z_m^{(k)}$ is a diallelic code for with the first state denoted $Z_I$ and the second $Z_J$, then:
+\begin{compactitem}
+    \item[$\bullet$] $C_m^{(k)}[*] = 0$  (no monomorphic states explain the data)
+    \item[$\bullet$] $C_m^{(k)}[^{\ast}_{IJ}] = 0$  if $I\neq Z_I$ or $J\neq Z_J$
+    \item[$\bullet$] if $I = Z_I$ and $J = Z_J$, then
+     $$C_m^{(k)}[^{i}_{IJ}] = {S_m^{(k)} \choose Y_m^{(k,0)}} (\virtPopSize - i)^{Y_m^{(k,0)}}i^{Y_m^{(k,1)}} \virtPopSize^{-S_m^{(k)}}$$
+     which is simply the probability of the of the observed data from based on the binomial distribution.
+     Note that the ``choose'' factor and the $ \virtPopSize^{-S_m^{(k)}}$ factors are constant for all values of $i$. So it could be dropped (because the likelihood need only be proportional to the probability of the data under the model).
+\end{compactitem}
+
+%$C_m^{(k)}[I]$
+
+
+
+
+\begin{compactitem}
+\end{compactitem}
 
 \section{To Do}
 \begin{compactitem}
