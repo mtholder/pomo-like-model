@@ -1,0 +1,148 @@
+% This is LLNCS.DEM the demonstration file of
+% the LaTeX macro package from Springer-Verlag
+% for Lecture Notes in Computer Science,
+% version 2.4 for LaTeX2e as of 16. April 2010
+%
+\documentclass{llncs}
+%
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{pdfpages}
+\usepackage{graphicx}
+\usepackage{paralist}
+\usepackage{xspace}
+\usepackage{paralist}
+\usepackage{bm}
+\usepackage{algorithm,algorithmic}
+\newcommand{\numOTUs}{\ensuremath{L}}
+\newcommand{\numSites}{\ensuremath{K}}
+\newcommand{\numSp}{\ensuremath{M}}
+\newcommand{\numObsStates}{\ensuremath{k}}
+\newcommand{\virtPopSize}{\ensuremath{N}}
+\newcommand{\polyProb}{\ensuremath{\phi}}}
+\newcommand{\Knorm}{\ensuremath{K}}}
+\newcommand{\pomo}{PoMo\xspace}
+% from http://tex.stackexchange.com/a/33547
+\newcommand{\appropto}{\mathrel{\vcenter{
+              \offinterlineskip\halign{\hfil$##$\cr
+                      \propto\cr\noalign{\kern2pt}\sim\cr\noalign{\kern-2pt}}}}}
+\DeclareMathOperator*{\argmax}{\arg\!\max}
+\usepackage{hyperref}
+\hypersetup{backref,  linkcolor=blue, citecolor=red, colorlinks=true, hyperindex=true}
+%
+\begin{document}
+\title{Jukes-Cantor \pomo}
+\titlerunning{JC-POMO implementation}
+\author{Mark T.~Holder\inst{1,2}\and Alexandros Stamatakis\inst{1,3}, \and $\ldots$}
+\authorrunning{Author 1 et al.} % abbreviated author list
+%\tocauthor{Author 1, Author 2}
+\institute{1. HITS gGmbH,\\2. Univ.~Kansas\\3. KIT}\\
+%\email{\{Authors\}@h-its.org} \and Institute 2,\\ Address, Country\\
+%\email{Author3@h-its.org}}
+%% Eumerating parts in aligned environments %%
+\newcommand\enum{\addtocounter{equation}{1}\tag{\theequation}}
+\maketitle              % typeset the title of the contribution
+\section {Motivating question}
+Can one prove that a \pomo-style model (described below) leads (or does not lead)
+to a statistically consistent estimator
+of the phylogenetic tree from concatenated data in the ``anamoly zone''?
+
+If so, does a \pomo-style model reduce part of parameter zone that leads to inconsistent
+    tree estimation, or does is it consistent over the whole zone?
+
+Can we say anything about the consistency of branch length estimation?
+
+\subsection*{Approach}
+(not much here, yet)
+
+It seems like the most promising approach might be to work on
+\begin{compactitem}
+    \item a ``toy'' Jukes-Cantor version of the \pomo model (a dramatic simplification of the 
+    \pomo model of \cite{DeMaioSK2013}),
+    \item data consisting of long sequences one sampled haplotype from each species
+    \item assumption of equal effective population sizes for all species.
+\end{compactitem}
+
+Consider a 10 state version with states: \texttt{A, C, G, T, AC, AG, AT, CG, CT, GT}.
+With the first four representing fixed states of a species, and the
+latter 6 representing the species being polymorphic for 2 alleles at a site.
+
+State graph: Picture the 4 fixed states as points on a tetrahedron.
+Rather than each edge of the tetrahedron being an edge in a graph, each corresponds
+to a path of 2 edges that passes through the polymorphic state.
+
+Rate exchangeabilities: 0 for non-adjacent states, and 1 for adjacent states.
+
+Free parameters: a branch length, and a frequency of the polymorphism, \polyProb.
+
+State frequencies: $(1-\polyProb)/4$ for the fixed states and $\polyProb/6$ for the polymorphic states.
+
+$Q$ matrix for the state ordering given above is:
+\begin{equation}
+Q & = & \left(
+\begin{matrix}
+  - & 0 & 0 & 0 & \frac{\polyProb}{6} & \frac{\polyProb}{6} & \frac{\polyProb}{6} & 0 & 0 & 0\\
+  0 & - & 0 & 0 & \frac{\polyProb}{6} & 0 & 0 & \frac{\polyProb}{6} & \frac{\polyProb}{6} & 0 \\
+  0 & 0 & - & 0 & 0 & \frac{\polyProb}{6} & 0 & \frac{\polyProb}{6} & 0 & \frac{\polyProb}{6} \\
+  0 & 0 & 0 & - & 0 & 0 & \frac{\polyProb}{6} & 0 & \frac{\polyProb}{6} &  \frac{\polyProb}{6} \\
+  \frac{1-\polyProb}{4} & \frac{1-\polyProb}{4} & 0 & 0 & - & 0 & 0 & 0 & 0 & 0 \\
+  \frac{1-\polyProb}{4} & 0 & \frac{1-\polyProb}{4} & 0 & 0 & - & 0 & 0 & 0 & 0 \\
+  \frac{1-\polyProb}{4} & 0 & 0 & \frac{1-\polyProb}{4} & 0 & 0 & - & 0 & 0 & 0 \\
+  0 & \frac{1-\polyProb}{4} & \frac{1-\polyProb}{4} & 0 & 0 & 0 & 0 & - & 0 & 0 \\
+  0 & \frac{1-\polyProb}{4} & 0 & \frac{1-\polyProb}{4} & 0 & 0 & 0 & 0 & - & 0 \\
+  0 & 0 & \frac{1-\polyProb}{4} & \frac{1-\polyProb}{4} & 0 & 0 & 0 & 0 & 0 & - 
+ \end{matrix}
+ \right)
+\end{equation}
+
+Mathematica can give an analytical result for the 9 distinct transition probabilities
+but they are very involved.
+
+Using single index for the fixed states and paired indices for poly states.
+So the 4 types of transitions starting in a fixed state are:
+\begin{eqnarray}
+\Pr(i\rightarrow i) & = & \hskip 4em\mbox{stay in same fixed state}\\
+\Pr(i\rightarrow j) & = & \hskip 4em\mbox{to diff fixed state}\\
+\Pr(i\rightarrow ij) = \Pr(i\rightarrow ji) & = & \hskip 4em\mbox{to adjacent poly. state}\\
+\Pr(i\rightarrow jk) & = & \hskip 4em\mbox{to non-adjacent poly. state}
+\end{eqnarray}
+if you sort them by the minimum number of state-changing transitions that would have to occur
+to cause the event.
+
+Similarly the 5 types of transitions starting in a polymorphic state are
+\begin{eqnarray}
+\Pr(ij\rightarrow ij) & = & \hskip 4em\mbox{stay in same poly. state}\\
+\Pr(ij\rightarrow i) & = & \hskip 4em\mbox{to adjacent fixed state}\\
+\Pr(ij\rightarrow ik) & = & \hskip 4em\mbox{to neighbor poly. state}\\
+\Pr(ij\rightarrow k) & = & \hskip 4em\mbox{to non-adjacent fixed state}\\
+\Pr(ij\rightarrow kl) & = & \hskip 4em\mbox{to ``opposite'' poly. state}.
+\end{eqnarray}
+(where $i$, $j$, $$k$, and $l$ are all distinct indices).
+
+Note that $\polyProb$ controls the flux through the model (the rate of substitution) and
+the relative frequency of the polymorphic states.
+
+Probabilities at the tips of the tree.
+If you only have 1 sample per species then the sample space of the 
+    observation, $X$, for a species at a site is only the four nucleotides: \texttt{A, C, G, T}
+The probability of observing the data, conditional on the state of the species, $s$, is:
+\begin{eqnarray}
+\Pr(X=i \mid s=i) & = & 1 \\
+\Pr(X=i \mid s=j) & = & 0 \\
+\Pr(X=i \mid s=ij)  = \Pr(X=j \mid s=ij) & = & 0.5 \\
+\Pr(X=i \mid s=jk) & = & 0
+\end{eqnarray}
+(where $i$, $j$, and $k$ are all distinct indices).
+
+\bibliographystyle{splncs03}
+\bibliography{pomo}
+
+
+
+
+\end{document}
+
+\begin{algorithm} \caption{}\label{}
+\begin{algorithmic}
+\end{algorithmic}
+\end{algorithm}
