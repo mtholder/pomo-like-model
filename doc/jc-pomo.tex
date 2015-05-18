@@ -98,15 +98,14 @@ Q & = & \left(
 Mathematica can give an analytical result for the 9 distinct transition probabilities
 but they are very involved.
 
-Using single index for the fixed states and paired indices for poly states.
-So the 4 types of transitions starting in a fixed state are:
-\begin{eqnarray}
-\Pr(i\rightarrow i) & = & \hskip 4em\mbox{stay in same fixed state}\\
+If we use a single index for the fixed states and paired indices for poly states, we can express the 4 types of transitions starting in a fixed state as:
+\begin{eqnarray}\Pr(i\rightarrow i) & = & \hskip 4em\mbox{stay in same fixed state}\\
 \Pr(i\rightarrow j) & = & \hskip 4em\mbox{to diff fixed state}\\
 \Pr(i\rightarrow ij) = \Pr(i\rightarrow ji) & = & \hskip 4em\mbox{to adjacent poly. state}\\
 \Pr(i\rightarrow jk) & = & \hskip 4em\mbox{to non-adjacent poly. state}
 \end{eqnarray}
-if you sort them by the minimum number of state-changing transitions that would have to occur
+(where $i$, $j$, $k$, and $l$ are all distinct indices).
+Those equations are ordered by the minimum number of state-changing transitions that would have to occur
 to cause the event.
 
 Similarly the 5 types of transitions starting in a polymorphic state are
@@ -117,7 +116,7 @@ Similarly the 5 types of transitions starting in a polymorphic state are
 \Pr(ij\rightarrow k) & = & \hskip 4em\mbox{to non-adjacent fixed state}\\
 \Pr(ij\rightarrow kl) & = & \hskip 4em\mbox{to ``opposite'' poly. state}.
 \end{eqnarray}
-(where $i$, $j$, $$k$, and $l$ are all distinct indices).
+(where $i$, $j$, $k$, and $l$ are all distinct indices).
 
 Note that $\polyProb$ controls the flux through the model (the rate of substitution) and
 the relative frequency of the polymorphic states.
