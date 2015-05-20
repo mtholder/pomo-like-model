@@ -23,6 +23,7 @@
 \coordinate [] (ACT) at  ( 0*\xfactor,  -0.6666667*\yfactor, -0.6666667*\zfactor);
 \coordinate [] (AGT) at  ( 0.6666667*\xfactor,  0*\yfactor, 0.6666667*\zfactor);
 \coordinate [] (CGT) at  ( -0.6666667*\xfactor,  0*\yfactor, 0.6666667*\zfactor);
+\coordinate [] (ACGT) at  ( 0*\xfactor,  0*\yfactor, 0*\zfactor);
 
 
 \draw[<->, opacity=.5] (A) -- (AC);
@@ -43,24 +44,33 @@
 \draw[<->, opacity=.5, very thin] (AG) -- (ACG);
 \draw[<->, opacity=.5, very thin] (CG) -- (ACG);
 
-\draw[<->, opacity=.5, very thin] (AT) -- (ACT);
 \draw[<->, opacity=.5, very thin] (AC) -- (ACT);
+\draw[<->, opacity=.5, very thin] (AT) -- (ACT);
 \draw[<->, opacity=.5, very thin] (CT) -- (ACT);
 
-\draw[<->, opacity=.5, very thin] (AT) -- (AGT);
 \draw[<->, opacity=.5, very thin] (AG) -- (AGT);
+\draw[<->, opacity=.5, very thin] (AT) -- (AGT);
 \draw[<->, opacity=.5, very thin] (GT) -- (AGT);
 
-\draw[<->, opacity=.5, very thin] (CT) -- (CGT);
 \draw[<->, opacity=.5, very thin] (CG) -- (CGT);
+\draw[<->, opacity=.5, very thin] (CT) -- (CGT);
 \draw[<->, opacity=.5, very thin] (GT) -- (CGT);
 
+
+\draw[<->, opacity=.5, very thin] (ACG) -- (ACGT);
+\draw[<->, opacity=.5, very thin] (ACT) -- (ACGT);
+\draw[<->, opacity=.5, very thin] (AGT) -- (ACGT);
+\draw[<->, opacity=.5, very thin] (CGT) -- (ACGT);
+
+
+\foreach \i in {ACGT}
+    \fill [black] (\i) circle (.5pt);
 
 \foreach \i in {ACG, ACT, AGT, CGT}
     \fill [gray] (\i) circle (.5pt);
 
 \foreach \i in {AC,AG,AT,CG,CT,GT}
-    \fill [gray] (\i) circle (1pt);
+    \fill [black] (\i) circle (1pt);
 \foreach \i in {A,C,G,T}
     \fill [black] (\i) circle (2pt);
 
