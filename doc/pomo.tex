@@ -20,6 +20,9 @@
 \newcommand{\numObsStates}{\ensuremath{k}}
 \newcommand{\virtPopSize}{\ensuremath{N}}
 \newcommand{\polyProb}{\ensuremath{\phi}}}
+\newcommand{\pomoState}[3]{\ensuremath{\mathcal{S}_{#1#2}^{#3}}}}
+\newcommand{\triPomoState}[5]{\ensuremath{\mathcal{S}_{#1#2#3}^{#4,#5}}}}
+\newcommand{\quadPomoState}[3]{\ensuremath{\mathcal{S}_{\texttt{ACGT}}^{#1,#2,#3}}}}
 \newcommand{\Knorm}{\ensuremath{K}}}
 \newcommand{\pomo}{PoMo\xspace}
 % from http://tex.stackexchange.com/a/33547
@@ -94,7 +97,8 @@ Evolutionary trajectories that involve a species being polymorphic for than one 
 Simliar to this from  \cite{DeMaioSK2013} for convenience:
 \begin{compactitem}
 \item[$\bullet$] $\virtPopSize$ the virtual population size.
-\item[$\bullet$] $M_{IJ}^{i,k}$ the instantaneous rate of change from having the state corresponding to having $i$ copies of allele $I$ and $N-i$ copeies of $J$ to having $k$ copies of $I$ and $N-k$ copies of $J$
+\item[$\bullet$] $\pomoState{I}{J}{K}$ is the state of displaying a frequency of the $I$ allele of $K/\virtPopSize$ and a frequency of $(N-K)/N$ for the $J$ allele.
+\item[$\bullet$] $M_{IJ}^{i,k}$ the instantaneous rate of change from having the state corresponding to having $i$ copies of allele $I$ and $N-i$ copies of $J$ to having $k$ copies of $I$ and $N-k$ copies of $J$
 \item[$\bullet$] $\polyProb$ will be used for what they called $\pi_{\mbox{pol}}$ for the sake of 
     legibility. This is the {\em a priori} probability of being in a polymorphic state at the root.
 \item[$\bullet$] $s_I$ the selection coefficient of the allele with state $I$.
@@ -300,11 +304,31 @@ Note that the $ \virtPopSize^{-S_m^{(k)}}$ factors are constant for all values o
     \item Need to figure out how to scale the matrix to give branch lengths in expected \# subst/site
 \end{compactitem}
 
-%A
+\section{Some generalizations}
+A generalization to multi-allelic sites is fairly straightforward, leading to a 14-state
+    (for mono-, di-, and tri-allelic sites) a fully generic version with at least 15 states.
+One question that arises in the abstract form of the model contemplated here, is whether mutation
+    to a tri- or quad-allelic state can take place from any allele, or only from the most-frequent
+    allele.
 
+Here $\triPomoState{I}{J}{K}{N_I}{N_J}$ is the notation for $N_I$ copies of allele $I$, $N_J$ copies
+    of allele $J$, and $\virtPopSize-N_I -N_J$ copies of allele $K$ when discussing tri-allelic states.
+The most generic notation uses all four bases: $\quadPomoState{N_A}{N_C}{N_G}$ where $N_T$ would be $\virtPopSize-N_A - N_C - N_G$
 
-
- 
+If the different frequency bins of the states are interpreted as frequencies in a population, then
+    it makes sense of the rate of transition to be simply reflect the frequency of the source allele 
+    and the destination allele.
+In a more abstract model (one with less of a tie to a sensible pop-gen perspective), one might view
+    the state adjacent to the monomorphic state as primarily accommodating situations in which one
+    allele is at very low frequency.
+Any new mutation is likely to occur in the most frequent allele, thus the new mutation will be
+    adding allele, never swapping one low-frequency allele for another.
+This has to do with whether it is possible to transition directly from state $\pomoState{I}{J}{N-1}$ to
+    $\pomoState{I}{K}{N-1}$ is allowed.
+If these $N-1$ frequency states are viewed as proxies for cases of very low-frequency alleles, then 
+    it is reasonable to prohibit these transitions and force either:
+    $\pomoState{I}{J}{N-1} \leftrightarrow \pomoState{I}{\ast}{N} \leftrightarrow \pomoState{I}{K}{N-1}$
+    or $\triPomoState{I}{J}{K}{N-1}{1} \leftrightarrow \triPomoState{I}{J}{K}{N-2}{1} \leftrightarrow \triPomoState{I}{J}{K}{N-1}{0}$
 
 
 \bibliographystyle{splncs03}
