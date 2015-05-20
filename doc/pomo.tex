@@ -338,17 +338,18 @@ Table \ref{taxonomy} shows a taxonomy of \pomo-like models with the following co
     \item \textbf{The source of the derivation of the rates}: base frequency {\em selection}, {\em neutrality}, or {\em abstract} (parameterizations that lack a clear population genetics interpretation).
     \item \textbf{Time Reversibility} {\em Yes} or {\em No}
     \item \textbf{Treatment of the $\virtPopSize -1$ and $1$ frequency states} As a {\em virtual} population size vs as a bin for very {\em low} frequency alleles.
+    \item \textbf{$\virtPopSize$} the size of the virtual population, or $\ast$ if this is not internally consistent over the model
     \item \textbf{Total number of states}
 \end{itemize}
 \begin{table}
     \caption{A taxonomy of \pomo-like models.}\label{taxonomy}
-        \begin{tabular}{r|c|c|c|c|c|r}
-                           & max.~\# & polymorph.& source of & time & $(\virtPopSize -1)$ or 1 & total \#\\
-        Name               & alleles & treatment & rates     & rev. & treatment                 & states\\
+        \begin{tabular}{r|c|c|c|c|c|r|r}
+                           & max.~\# & polymorph.& source of & time & $(\virtPopSize -1)$ or 1  & & total \#\\
+        Name               & alleles & treatment & rates     & rev. & treatment                 & $\virtPopSize $& states\\
         \hline
-        DiVarAbsRevLow-10   & 2 & variability &abstract & Yes   & low & 10\\
+        DiVarAbsRevLow-2-10   & 2 & variability &abstract & Yes   & low & 2 & 10\\
         \hline
-        QuadVarAbsRevLow-15 & 4 & variability &abstract & Yes   & low & 15\\
+        QuadVarAbsRevLow-$\ast$-15 & 4 & variability &abstract & Yes   & low & $\ast$ & 15\\
         \hline
         \end{tabular}
     \begin{center}
@@ -358,13 +359,13 @@ Table \ref{taxonomy} shows a taxonomy of \pomo-like models with the following co
 \begin{figure}
     \begin{center}
         \includegraphics[scale=1]{images/10-state.pdf}
-        \caption{DiVarAbsRevLow-10: Simplest \pomo-like model with just $\virtPopSize=2$. Diallelic states shown as smaller points. Monomorphic states as larger black circles.}\label{pomoDiVarAbsRevLow}
+        \caption{DiVarAbsRevLow-2-10: Simplest \pomo-like model with just $\virtPopSize=2$. Diallelic states shown as smaller points. Monomorphic states as larger black circles.}\label{pomoDiVarAbsRevLow}
     \end{center}
 \end{figure}
 \begin{figure}
     \begin{center}
         \includegraphics[scale=1]{images/15-state.pdf}
-        \caption{QuadVarAbsRevLow-15: Simplest general \pomo-like model with just $\virtPopSize=2$. Size so circle is used to denote the number of alleles (monomorphic are the largest). 15 total states.}\label{pomoQuadVarAbsRevLow}
+        \caption{QuadVarAbsRevLow-$\ast$-15: Simplest general \pomo-like model with just $\virtPopSize=2$. Size so circle is used to denote the number of alleles (monomorphic are the largest). 15 total states.}\label{pomoQuadVarAbsRevLow}
     \end{center}
 \end{figure}
 \bibliographystyle{splncs03}
