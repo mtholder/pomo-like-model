@@ -213,7 +213,8 @@ extern double exp_approx (double x);
 #define M_64CAT          9
 #define M_64GAMMA        10
 //mth define a POMO model (mostly used for parsing only
-#define M_POMOGAMMA      11
+#define M_POMOGAMMA_16   11
+#define M_POMOGAMMA_64   12
 
 
 #define DAYHOFF    0
@@ -290,8 +291,9 @@ extern double exp_approx (double x);
 #define GENERIC_32       6
 #define GENERIC_64       7
 //mth define a POMO datatype
-#define POMO             8
-#define MAX_MODEL        9
+#define POMO_16          8
+#define POMO_64          9
+#define MAX_MODEL        10
 
 #define SEC_6_A 0
 #define SEC_6_B 1
@@ -533,18 +535,18 @@ typedef struct iL {
 
 typedef  struct
 {
-  int              numsp;
-  int              sites;
-  unsigned char             **y;
-  unsigned char             *y0; 
-  int              *wgt;
+  int           numsp;
+  int64_t           sites;
+  unsigned char    **y;
+  unsigned char    *y0; 
+  int           *wgt;
 } rawdata;
 
 typedef  struct {
-  int             *alias;       /* site representing a pattern */
-  int             *aliaswgt;    /* weight by pattern */
-  int             *rateCategory;
-  size_t              endsite;     /* # of sequence patterns */
+  int64_t           *alias;       /* site representing a pattern */
+  int              *aliaswgt;    /* weight by pattern */
+  int              *rateCategory;
+  size_t           endsite;     /* # of sequence patterns */
   double          *patrat;      /* rates per pattern */
   double          *patratStored; 
 } cruncheddata;
@@ -704,6 +706,11 @@ typedef struct {
   double right[1600] __attribute__ ((aligned (BYTE_ALIGNMENT)));
 } siteAAModels;
 
+typedef struct {
+  int indCount;
+  int *indMap;
+} pomoInd;
+
 typedef  struct  {
   boolean useGappedImplementation;
   boolean saveMemory;
@@ -719,8 +726,9 @@ typedef  struct  {
   int    *inserts;
   int    branchCounter;
 
- 
-
+  int numberOfPomoSpecies;
+  int *pomoMap;
+  pomoInd *pomoIndex;
 
   
 
@@ -745,8 +753,8 @@ typedef  struct  {
   int              *initialDataVector;
   int              *extendedDataVector;
 
-  int              *patternPosition;
-  int              *columnPosition;
+  int64_t              *patternPosition;
+  int64_t              *columnPosition;
 
   char             *secondaryStructureInput;
 
@@ -1022,8 +1030,6 @@ typedef struct
 
   unsigned char undetermined;
 
-  const char *inverseMeaning;
-
   int states;
 
   boolean smoothFrequencies;
@@ -1068,7 +1074,7 @@ extern void getxnode ( nodeptr p );
 extern void hookup ( nodeptr p, nodeptr q, double *z, int numBranches);
 extern void hookupDefault ( nodeptr p, nodeptr q, int numBranches);
 extern boolean whitechar ( int ch );
-extern void errorExit ( int e );
+extern void errorExit ( int e )  __attribute__((noreturn));
 extern void printResult ( tree *tr, analdef *adef, boolean finalPrint );
 extern void printBootstrapResult ( tree *tr, analdef *adef, boolean finalPrint );
 extern void printBipartitionResult ( tree *tr, analdef *adef, boolean finalPrint );
@@ -1283,7 +1289,7 @@ extern void testGapped(tree *tr);
 extern boolean issubset(unsigned int* bipA, unsigned int* bipB, unsigned int vectorLen);
 extern boolean compatible(entry* e1, entry* e2, unsigned int bvlen);
 
-
+extern boolean lineContainsOnlyWhiteChars(char *line);
 
 extern int *permutationSH(tree *tr, int nBootstrap, long _randomSeed);
 

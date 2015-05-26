@@ -2498,7 +2498,7 @@ const int obsToPomoCounts[16][10] = {{15, 15, 15, 15, 15, 15, 15, 15, 15, 15},
                                      { 1,  1,  4,  4,  1,  2,  2,  2,  2,  0}, // K = {GT}
                                      { 4,  1,  4,  4,  4,  0,  0,  2,  2,  0}, // D = {AGT}
                                      { 1,  4,  4,  4,  2,  2,  2,  0,  0,  0}, // B = {CGT}
-                                     { 4,  4,  4,  4,  0,  0,  0,  0,  0,  0}} // N = {ACGT}
+                                     { 4,  4,  4,  4,  0,  0,  0,  0,  0,  0}}; // N = {ACGT}
 
 static double calcBinomProb(unsigned numFirst, unsigned numSecond, double probFirst);
 static double logBinomCoefficient(unsigned numFirst, unsigned numSecond);
@@ -2512,11 +2512,11 @@ static double logBinomCoefficient(unsigned numFirst, unsigned numSecond)
       return 0.0;
     }
   unsigned i;
-  double logp = 0.0
+  double logp = 0.0;
   for (i = 0; i + larger < n; ++i)
     {
       double numeratorFactor = n - i;
-      double denomFactor = 1 + i;
+      double denominatorFactor = 1 + i;
       logp += log(numeratorFactor) - log(denominatorFactor);
     }
   return logp;
@@ -2549,7 +2549,7 @@ static void buildPomoCLV(size_t i, double *pomoBuffer, tree *tr, pInfo *p, unsig
 {
   size_t j;
   size_t site;
-  const int numDialleleFreqBins = (p->states - 4)/6 ; // p->states-4 is the number of states for diallelic conditions. There are 6 diallelic combinations.
+  const size_t numDialleleFreqBins = (p->states - 4)/6 ; // p->states-4 is the number of states for diallelic conditions. There are 6 diallelic combinations.
   const double binWidth = 1.0/((double)(1 + numDialleleFreqBins));
   //mth we allow only for max two states per inds in a species; how do we handle ambiguous characters?
   //mth right now they if we have a site with A and a site with C and a third site with an ambiguous character representing A or G
@@ -2559,8 +2559,7 @@ static void buildPomoCLV(size_t i, double *pomoBuffer, tree *tr, pInfo *p, unsig
 
   for(site = p->lower; site < p->upper; site++)    
     {   
-      int stateCount, sc;
-      unsigned int siteValue = 0;
+      int sc;
       double cl;
       //mth loop over DNA sequences of individuals for POMO species i
       int stillValid[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
@@ -2572,12 +2571,12 @@ static void buildPomoCLV(size_t i, double *pomoBuffer, tree *tr, pInfo *p, unsig
 	  const int taxonIndex = tr->pomoIndex[i].indMap[j];
 	  const unsigned char tipValue = (y0 + sizeof(unsigned char)
 					  * ((((size_t)taxonIndex - 1) *  tr->originalCrunchedLength)  + site))[0];
-	  if((tipValue < 0 || t  == 0)
+	  if((tipValue < 1) || (tipValue > 15))
 	    {
 	      printf("\n Invalid code for a DNA state!\n");
 	      errorExit(-1);
 	    }
-	  const int effectRow[10] = obsToPomoCounts[tipValue];
+	  const int * effectRow = obsToPomoCounts[tipValue];
 	  for (sc = 0; sc <= LAST_MONO_STATE_CLASS; ++sc)
 	    {
 	      if (effectRow[sc] & 1)
@@ -2586,7 +2585,7 @@ static void buildPomoCLV(size_t i, double *pomoBuffer, tree *tr, pInfo *p, unsig
 		    {
 		      if (numStillValid == 1)
 			{
-			printf("\n Column %d of species %d cannot be explained by PoMo - more than 2 alleles/species required!\n");
+			printf("\n Column %d of species %d cannot be explained by PoMo - more than 2 alleles/species required!\n", (int)j, (int)i);
 			errorExit(-1);
 			}
 		      numStillValid -= 1;
@@ -2602,7 +2601,7 @@ static void buildPomoCLV(size_t i, double *pomoBuffer, tree *tr, pInfo *p, unsig
 		    {
 		      if (numStillValid == 1)
 			{
-			printf("\n Column %d of species %d cannot be explained by PoMo - more than 2 alleles/species required!\n");
+			printf("\n Column %d of species %d cannot be explained by PoMo - more than 2 alleles/species required!\n", (int)j, (int)i);
 			errorExit(-1);
 			}
 		      numStillValid -= 1;
@@ -2627,16 +2626,16 @@ static void buildPomoCLV(size_t i, double *pomoBuffer, tree *tr, pInfo *p, unsig
 	{
 	  pomoBuffer[(site - p->lower) * (size_t)p->states + sc] = (stillValid[sc] ? 1.0 : 0.0);
 	}
-      diallelicOffset = 1 + LAST_MONO_STATE_CLASS;
+      size_t diallelicOffset = 1 + LAST_MONO_STATE_CLASS;
       for (; sc <= LAST_POMO_STATE_CLASS; ++sc, diallelicOffset += numDialleleFreqBins)
 	{
 	  if (stillValid[sc])
 	    {
 	      for (j = 0 ; j < numDialleleFreqBins; ++j)
 		{
-		  secondAlleleFreq = binWidth*((double)(1 + j));
-		  firsAlleleFreq = 1.0 - secondAlleleFreq;
-		  cl = calcBinomProb(diallelicCounts[sc][0], diallelicCounts[sc][1], firsAlleleFreq);
+		  double secondAlleleFreq = binWidth*((double)(1 + j));
+		  double firstAlleleFreq = 1.0 - secondAlleleFreq;
+		  cl = calcBinomProb(diallelicCounts[sc][0], diallelicCounts[sc][1], firstAlleleFreq);
 		  pomoBuffer[(site - p->lower) * (size_t)p->states + diallelicOffset + j] = cl;
 		}
 	    }
