@@ -2571,6 +2571,7 @@ static void buildPomoCLV(size_t i, double *pomoBuffer, tree *tr, pInfo *p, unsig
 	  const int taxonIndex = tr->pomoIndex[i].indMap[j];
 	  const unsigned char tipValue = (y0 + sizeof(unsigned char)
 					  * ((((size_t)taxonIndex - 1) *  tr->originalCrunchedLength)  + site))[0];
+	  //printf("i=%lu j=%lu site=%lu tipValue=%u\n", i, j, site, tipValue); //DEBUG
 	  if((tipValue < 1) || (tipValue > 15))
 	    {
 	      printf("\n Invalid code for a DNA state!\n");
@@ -2621,10 +2622,14 @@ static void buildPomoCLV(size_t i, double *pomoBuffer, tree *tr, pInfo *p, unsig
 		}
 	    }
 	}
+      size_t pbIndex;
       //mth set pomo CLV buffer entries for a specific site (indexing of the buffer starts at 0) to some value 
       for (sc = 0; sc <= LAST_MONO_STATE_CLASS; ++sc)
 	{
-	  pomoBuffer[(site - p->lower) * (size_t)p->states + sc] = (stillValid[sc] ? 1.0 : 0.0);
+	  pbIndex = (site - p->lower) * (size_t)p->states + sc;
+	  cl = (stillValid[sc] ? 1.0 : 0.0);
+	  pomoBuffer[pbIndex] = cl;
+	  ///printf("    pomoBuffer[%lu] = %lf\n", pbIndex, cl); //DEBUGGING
 	}
       size_t diallelicOffset = 1 + LAST_MONO_STATE_CLASS;
       for (; sc <= LAST_POMO_STATE_CLASS; ++sc, diallelicOffset += numDialleleFreqBins)
@@ -2635,16 +2640,20 @@ static void buildPomoCLV(size_t i, double *pomoBuffer, tree *tr, pInfo *p, unsig
 		{
 		  double secondAlleleFreq = binWidth*((double)(1 + j));
 		  double firstAlleleFreq = 1.0 - secondAlleleFreq;
+		  pbIndex = (site - p->lower) * (size_t)p->states + diallelicOffset + j;
 		  cl = calcBinomProb(diallelicCounts[sc][0], diallelicCounts[sc][1], firstAlleleFreq);
-		  pomoBuffer[(site - p->lower) * (size_t)p->states + diallelicOffset + j] = cl;
+		  pomoBuffer[pbIndex] = cl;
+		  //printf("    pomoBuffer[%lu] = %lf\n", pbIndex, cl); //DEBUGGING
 		}
 	    }
 	  else
 	    {
+	      pbIndex = (site - p->lower) * (size_t)p->states + diallelicOffset;
 	      for (j = 0 ; j < numDialleleFreqBins; ++j)
 		{
-		  pomoBuffer[(site - p->lower) * (size_t)p->states + diallelicOffset + j] = 0.0;
+		  pomoBuffer[pbIndex + j] = 0.0;
 		}
+	      //printf("    pomoBuffer[%lu] -> pomoBuffer[%lu] = 0.0\n", pbIndex, pbIndex + numDialleleFreqBins - 1); //DEBUGGING
 	    }
 	}
     }
