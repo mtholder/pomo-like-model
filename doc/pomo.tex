@@ -132,7 +132,7 @@ Nevertheless, we can create \pomo-inspired reversible model by using
 \begin{eqnarray}
 \pi_{IJ}^{(i)} & = & \frac{\polyProb}{\Knorm }\left(
     \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right) \hskip 4em \forall i: 0<i<N \label{stateFreqPoly}\\
-    \Knorm  & = & \sum_I \sum_{J\neq I}\sum_{i=1}^{N-1} \left(
+    \Knorm  & = & \sum_I \sum_{J > I}\sum_{i=1}^{N-1} \left(
     \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right) \label{KnormDef}
 \end{eqnarray}
 with the equilibrium frequency of being monomorphic for state $I$ is:
@@ -141,7 +141,15 @@ with the equilibrium frequency of being monomorphic for state $I$ is:
 \end{eqnarray}
 as assumed for the root state frequencies (on page 2259 of \cite{DeMaioSK2013}).
 
-Setting $s_I=s_J$ simplifies eqn (1) and (2) of \cite{DeMaioSK2013} to:
+Eqn(1) of \cite{DeMaioSK2013} is:
+\begin{eqnarray}
+ M_{IJ}^{i,i+1}  = \frac{i(1 + s_J - s_I)}{i(1 + s_J - s_I)+(N-i)}\times\frac{N-i}{N}
+\end{eqnarray}
+and their Eqn(2) is:
+\begin{eqnarray}
+ M_{IJ}^{i,i-1}  = \frac{N-i}{i(1 + s_J - s_I)+(N-i)}\times\frac{i}{N}
+\end{eqnarray}
+Setting $s_I=s_J$ simplifies these equations by changing $(1 + s_J - s_I)$ to 1 such that the become equal to each other:
 \begin{eqnarray}
  M_{IJ}^{i,i+1}  = M_{IJ}^{i,i-1} & = & \frac{i(N-i)}{N^2}
 \end{eqnarray}
