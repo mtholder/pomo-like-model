@@ -182,25 +182,26 @@ We can verify the time-reversibility of the $Q$-matrix in \ref{polyQPair} for th
 As with \pomo, for any transition involving a change of allele count $>1$, we set transition rates to be 0.
 
 So to complete the $Q$-matrix we need the rates of entering the polymorphic state from a fixed state.
-We can base the $i\leftrightarrow 0$, transition rates on the \pomo by adopting 
+We can base the $1\leftrightarrow 0$, transition rates on the \pomo by adopting 
     the same transition rate for leaving the monomorphic state and
     then solving for the symmetric factor of the rate matrix, $r_{IJ}^{0,1}$
 \begin{eqnarray}
-    Q_{IJ}^{0,1} & = & N^2 \mu_{IJ}  \label{toDiallelicQEl}\\
+    Q_{IJ}^{0,1} & = & N^2 \mu_{JI}  \label{toDiallelicQEl}\\
     Q_{IJ}^{0,1} & = & \pi_{IJ}^{(1)} r_{IJ}^{0,1} \nonumber\\
-    \pi_{IJ}^{(1)} r_{IJ}^{0,1}& = & N^2 \mu_{IJ}  \nonumber \\
-    r_{IJ}^{0,1}& = & \frac{N^2 \mu_{IJ}}{\pi_{IJ}^{(1)}}
+    \pi_{IJ}^{(1)} r_{IJ}^{0,1}& = & N^2 \mu_{JI}  \nonumber \\
+    r_{IJ}^{0,1}& = & \frac{N^2 \mu_{JI}}{\pi_{IJ}^{(1)}}
 \end{eqnarray}
 Substituting the state frequency for the polymorphic state from Eqn (\ref{polyStateFreqSimplified}), we get:
 \begin{eqnarray}
-    r_{IJ}^{0,1} & = & \frac{\Knorm N^2 \mu_{IJ}(N-1)}{\polyProb N\pi_I\pi_J\mu_{IJ}} \nonumber \\
-                 & = & \frac{\Knorm N(N-i)}{\polyProb \pi_I\pi_J} 
+    r_{IJ}^{0,1} & = & \frac{\Knorm N^2 \mu_{JI}(N-1)}{\polyProb N\pi_I\pi_J r_{IJ}} \nonumber \\
+    & = & \frac{\Knorm N^2 \pi_{I}r_{IJ}(N-1)}{\polyProb N\pi_I\pi_J r_{IJ}} \nonumber \\
+                 & = & \frac{\Knorm N(N-1)}{\polyProb \pi_J} 
 \end{eqnarray}
 This provides us with a value for, $Q_{IJ}^{1,0}$, the fixation of state $I$, if we use Eqn(\ref{monoStateFreq}) for the equilibrium state frequency of the root state:
 \begin{eqnarray}
     Q_{IJ}^{1,0} & = & \pi_{IJ}^{(0)} r_{IJ}^{0,1} \nonumber \\
-                 & = & \left(\pi_I(1-\polyProb)\right)\left(\frac{\Knorm N(N-i)}{\polyProb \pi_I\pi_J} \right) \nonumber \\
-                 & = & \frac{\Knorm (1-\polyProb)N(N-i)}{\polyProb \pi_J} \label{toMonomorphicQEl}
+                 & = & \left(\pi_I(1-\polyProb)\right)\left(\frac{\Knorm N(N-i)}{\polyProb \pi_J} \right) \nonumber \\
+                 & = & \frac{\Knorm \pi_I(1-\polyProb)N(N-i)}{\polyProb \pi_J} \label{toMonomorphicQEl}
 \end{eqnarray}
 
 The non-zero elements of the transition rate matrix are thus given in equations \ref{polyQPair}, \ref{toDiallelicQEl}, and \ref{toMonomorphicQEl}.
