@@ -133,7 +133,11 @@ Nevertheless, we can create \pomo-inspired reversible model by using
 \pi_{IJ}^{(i)} & = & \frac{\polyProb}{\Knorm }\left(
     \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right) \hskip 4em \forall i: 0<i<N \label{stateFreqPoly}\\
     \Knorm  & = & \sum_I \sum_{J > I}\sum_{i=1}^{N-1} \left(
-    \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right) \label{KnormDef}
+    \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right) \\
+    & = & \sum_I \sum_{J > I}\sum_{i=1}^{N-1} \left(
+    \frac{N\pi_I\pi_J r_{IJ}}{i(N-i)}\right) \\
+    & = & \sum_I \sum_{J > I}\left(N\pi_I\pi_J r_{IJ} \left[\sum_{i=1}^{N-1} \frac{1}{i(N-i)}\right]\right) \\
+    & = &  N\left[\sum_{i=1}^{N-1} \frac{1}{i(N-i)}\right]\left(\sum_I \sum_{J > I}\pi_I\pi_J r_{IJ}\right) \label{KnormDef}
 \end{eqnarray}
 with the equilibrium frequency of being monomorphic for state $I$ is:
 \begin{eqnarray}
@@ -225,6 +229,23 @@ The variables which appear in the model, but which are not parameters in the sta
     \item[$\bullet$] $\Knorm$ - a deterministic funtion of the parameters and \virtPopSize. See Eqn(\ref{KnormDef}).
 \end{compactitem}
 
+\subsection*{Summarizing $Q$ matrix caluclations}
+\begin{itemize}
+  \item by eqn \ref{polyQPair} for all transitions were $i$ and its neighboring are not $0$ or $N$ we have:
+    $$Q_{IJ}^{i,i+1}  = Q_{IJ}^{i,i-1} & = & \frac{i(N-i)}{N}$$
+  \item by \ref{toDiallelicQEl}, introduction of new allele $I$ (from the state of fixed for $J$) is:
+    $$Q_{IJ}^{0,1} & = & N^2 \pi_I r_{JI} $$ 
+  \item by \ref{toMonomorphicQEl}, loss of the only copy of allele $I$ (leaving the population fixed for $J$) is: 
+    $$Q_{IJ}^{1,0} =  \frac{\Knorm (1-\polyProb)N(N-1)}{\polyProb }$$
+   where $\polyProb$ is a free parameter that is the stationary probability of being in a diallelic state, and (by eqn \ref{KnormDef}):
+    $$\Knorm = N\left[\sum_{i=1}^{N-1} \frac{1}{i(N-i)}\right]\left(\sum_I \sum_{J > I}\pi_I\pi_J r_{IJ}\right) $$
+  \item The diagonal elements are -1 times the sum of all elements in that row.
+  \item all other elements of $Q$ are 0.
+  \item by eqn \ref{monoStateFreq} the frequency of a monomorphic state: 
+     $$\pi_{IJ}^{(N)} = \pi_{JI}^{(0)} = \pi_I(1-\polyProb) $$
+    \item by eqn \ref{polyStateFreqSimplified} the frequency of a diallelic state: 
+     $$\pi_{IJ}^{(i)} & = & \frac{\polyProb}{\Knorm }\left( \frac{N\pi_I\pi_J r_{IJ}}{i(N-i)}\right) $$
+\end{itemize}
 \section{Transforming data}
 We have sample $M$ species, and have $S_m$ individuals sampled from species $m$.
 Assuming that each site is a random draw from the species current state is simple, though it ignores
@@ -303,8 +324,6 @@ If $Z_m^{(k)}$ is a monomorphic code for the state $Z_I$ then:
 \end{compactitem}
 Note that the $ \virtPopSize^{-S_m^{(k)}}$ factors are constant for all values of $i$, but they 
      {\em cannot} be omitted because it does not occur in the $C_m^{(k)}[I]$ case.
-
-
 
 \begin{compactitem}
 \end{compactitem}
