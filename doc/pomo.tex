@@ -406,6 +406,35 @@ Table \ref{taxonomy} shows a taxonomy of \pomo-like models with the following co
     \end{center}
 \end{figure}
 
+\newpage
+\section*{low-,mid-,high- binning}
+In the context of deeper-time phylogenetics, the time scale of drift
+    is expected to be much faster than the mutation rate.
+With the exception of the very short branches of tree, the increase
+    in state-space caused by relatively fine-scaled binning of frequencies
+    into $N+1$ bins seems like it could be overkill.
+
+One could simplify the model as follows:
+\begin{compactitem}
+    \item $N$ is a fixed-by-the-user virtual population size.
+    \item In the diallelic condition, the first allele in the subscript is binned into $l$ (low = $1/N$), $m$ (mid=0.5), and $h$ (high= $(N-1)/N$) frequencies
+\end{compactitem}
+the 22 states would be:
+\begin{compactitem}
+    \item The 4 monomorphic states: $S_{A\ast}^{(N)}, S_{C\ast}^{(N)}, S_{G\ast}^{(N)}, $and $ S_{T\ast}^{(N)}$.
+    \item The 18 dimorphic states. For the 6 pairs of nucleotides, there would be 3 polymorphic bins: $S_{AC}^{(1)}, S_{AC}^{(N/2)}, S_{AC}^{(N-1)}$.
+\end{compactitem}
+
+
+Because this coarse binning breaks the tight connections with the population genetics underpinnig, one could estimate an extra parameter to generate the state frequencies, and $Q$ matrix:
+\begin{compactitem}
+    \item The 3 free parameters needed to yield the 4 equilibrium frequency of the mutation process: $1 = \pi_A + \pi_C + \pi_G + \pi_T$
+    \item The 5 free parameters needed to yield the 6 symmetric factors of the GTR rate matrix:  $\{r_{AC}$, $r_{AG}$, $r_{AT}$, $r_{CG}$, $r_{CT}$, $r_{GT}\}$
+    \item $\phi$ the equilibrium probability of being in the diallelic state, and
+    \item a new frequency parameter, $\psi = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(N-1)} = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(1)}$; This govens the relative abundance of the intermediate frequency bin states. and 
+    \item a new symmetric rate factor: $r_{lm} = r_{mh}$
+\end{compactitem}
+
 \bibliographystyle{splncs03}
 \bibliography{pomo}
 
