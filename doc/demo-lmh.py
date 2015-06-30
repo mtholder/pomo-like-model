@@ -111,6 +111,33 @@ def lmh_pomo_qmat(params):
     row_sum = sum(raw_mat[row_ind])
     assert raw_mat[row_ind][row_ind] == 0.0
     raw_mat[row_ind][row_ind] = -1*row_sum
+
+  # Set scaler so that exit from monomorphic states = 1
+  mono_exit_rate = 0.0
+  for i in range(4):
+    i_exit_rate = 0.0
+    for j, r in enumerate(raw_mat[i]):
+      if r > 0.0:
+        if j in S.IND_LOW:
+          I, J = S.IND_LOW[j]
+        else:
+          assert j in S.IND_HIGH
+          I, J = S.IND_HIGH[j]
+        assert (I == i) or (J == i)
+        alleles_sp_factor = nuc_freqs[I]*nuc_freqs[J]*sym_mu_mat[I][J]
+        to_mid_rate = to_mid_coefficient*alleles_sp_factor
+        prob_next_move_to_mid = to_mid_rate/(to_mid_rate + loss_rate)
+        # once an allele makes to 50/50 freq, its' probability of substitution is 50%
+        eventual_subst_prob = 0.5*prob_next_move_to_mid
+        i_to_j_subst_rate = eventual_subst_prob*r
+        i_exit_rate += i_to_j_subst_rate
+    mono_exit_rate += nuc_freqs[i]*i_exit_rate
+  mono_exit_rate *= (1.0 - prob_poly)
+  scaler = 1.0/mono_exit_rate
+  for row in raw_mat:
+    for i in range(NUM_STATES):
+      row[i] *= scaler
+  print 'scaler =', scaler
   return raw_mat
 
 
@@ -125,7 +152,7 @@ def lmh_pomo_prob(params, edge_len):
 params = {}
 params['NUC_FREQ'] = [0.1, 0.2, 0.3, 0.4]
 params['GTR_RATE'] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-params['PROB_POLY'] = 0.05 # Equil. prob. being polymorphic
+params['PROB_POLY'] = 0.01 # Equil. prob. being polymorphic
 params['PSI'] = 0.1 # psi/(2 + psi) = conditional prob of being in 50/50 mid point given polymorphic
 params['DRIFT_RATE'] = 200.0 # should be >> than GTR rates 
 
@@ -136,7 +163,9 @@ for i, row in enumerate(q):
   print '{:10} {}'.format(label, rs)
 
 print
-p = lmh_pomo_prob(params, 100000)
+import sys
+edge_len = float(sys.argv[1])
+p = lmh_pomo_prob(params, edge_len)
 for i, row in enumerate(p):
   rs = '   '.join(['{:10.4f}'.format(el) for el in row])
   label = 'P[{}][*] ='.format(i)
