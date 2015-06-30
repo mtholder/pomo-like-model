@@ -14,6 +14,8 @@
 \usepackage{paralist}
 \usepackage{bm}
 \usepackage{algorithm,algorithmic}
+\setlength{\parindent}{0}
+\setlength{\parskip}{0.5em}
 \newcommand{\numOTUs}{\ensuremath{L}}
 \newcommand{\numSites}{\ensuremath{K}}
 \newcommand{\numSp}{\ensuremath{M}}
@@ -47,6 +49,9 @@
 \newcommand\enum{\addtocounter{equation}{1}\tag{\theequation}}
 \maketitle              % typeset the title of the contribution
 \section {Motivation}
+This document is a section of \url{https://github.com/mtholder/pomo-like-model/blob/master/doc/pomo.tex}
+that was pulled out for the sake of briefer presentation.
+
 Large scale phylogenetic studies feature large numbers of species sampled with relatively few
     individuals sampled per species.
 This sampling strategy make it difficult to examine the history of gene geneaologies with great precision, but 
@@ -56,410 +61,130 @@ This sampling strategy make it difficult to examine the history of gene geneaolo
 
 The \pomo model of \cite{DeMaioSK2013} provides an elegant approximate method for dealing with polymorphism 
     on species trees.
-However, the model is more general that needed for many phylogenetic purposes\footnote{or at least we {\em hope} that
-    one need not implement such a rich model for the purpose of estimating trees in most cases.} and
-    they formulate the model without the constraint of time reversibility.
-The lack of time reversibility adds realism, but necessitates the use of rooted tree representations (furthermore
-    the infer new parameters to describe the frequency of states at the root).
-
-Here we develop a time-reversible that borrows ideas from the \pomo model, but is more amenable to 
-    implementation in ExaML \cite{ExaMLInitial,ExaMLLatest}.
-\section {Introduction}
-DeMaio, Schl\"otterer, and Kosiol \cite{DeMaioSK2013} introduced a clever approach to dealing with polymorphism in the context of
-    phylogenetic estimation.
-Rather than explicitly treating the gene genealogy of a locus as a nuisance parameter, their polymorphism-aware
-    phylogenetic model (\pomo) uses hidden state approach to model the frequency of residues for a site.
-
-Input: Each of $\numOTUs$ OTUs is assumed to have sequence data from $\numSites$ sites and be mapped to one of $\numSp$ species.
-
-The number of states of the data is $\numObsStates$. 
-The model is described for DNA data ($\numObsStates=4$), but could be used for other small values of $\numObsStates$ if
-    the process of fixation of a new state is assumed to be similiar to the genetic drift/selection as modelled by \pomo.
-
-The model treats the evolution of each site as a continuous-time Markov process with a larger state space which
-    includes states that correspond to the species being monomorphic for each of the $\numObsStates$ but als
-    considers states representing polymorphic states in which 2 alleles occur at differing frequencies.
-The continuous frequency of one allele in a population is binned for computational convenience.
-This is done by imagining a virtual population of size $\virtPopSize$.
-
-The process one residue replacing another would consists of:
-\begin{compactenum}
-\item A mutation such that the new allele has frequency $1/\virtPopSize$,
-\item pass through each of the other polymorphic bins for this pair, $\{2/\virtPopSize, 3/\virtPopSize,\ldots,(\virtPopSize-1)/\virtPopSize, 1\}$
-    where a frequency of 1 corresponds to the state that maps to the new allele's ``observable'' state being fixed.
-\end{compactenum}
-The drift process is reversible.
-
-Evolutionary trajectories that involve a species being polymorphic for than one allele are clearly 
-    biologically possible, but are prohibited to reduce the size of the state space.
-    The state space of evolution in \pomo is: $\numObsStates + {\numObsStates \choose 2} \left(\virtPopSize - 1\right)$
-
-\section{notation}
-Simliar to this from  \cite{DeMaioSK2013} for convenience:
-\begin{compactitem}
-\item[$\bullet$] $\virtPopSize$ the virtual population size.
-\item[$\bullet$] $\pomoState{I}{J}{K}$ is the state of displaying a frequency of the $I$ allele of $K/\virtPopSize$ and a frequency of $(N-K)/N$ for the $J$ allele.
-\item[$\bullet$] $M_{IJ}^{i,k}$ the instantaneous rate of change from having the state corresponding to having $i$ copies of allele $I$ and $N-i$ copies of $J$ to having $k$ copies of $I$ and $N-k$ copies of $J$
-\item[$\bullet$] $\polyProb$ will be used for what they called $\pi_{\mbox{pol}}$ for the sake of 
-    legibility. This is the {\em a priori} probability of being in a polymorphic state at the root.
-\item[$\bullet$] $s_I$ the selection coefficient of the allele with state $I$.
-\item[$\bullet$] $\Knorm$ is a normalization constant (called $K_{\mbox{norm}}$ by \cite{DeMaioSK2013}).
-\end{compactitem}
-
-\section{A time-reversible form of \pomo}
-The constraint of time-reversibility is that, $\forall X \neq Y$:
-\begin{eqnarray}
-    \pi_X q_{XY} = \pi_Y q_{YX}
-\end{eqnarray}
-were $\pi_X$ is the equilibrium state frequency of $X$, and $q_{XY}$ is the instantaneous
-    rate of that an element of state $X$ tranitions to one of state $Y$.
-This enables the refactoring into:
-\begin{eqnarray}
-    \pi_X q_{XY} & = & \pi_Y q_{YX} \\
-    q_{XY} & = & r_{XY}\pi_Y \\
-    q_{YX} & = & r_{XY}\pi_X
-\end{eqnarray}
-to emphasize the existence of a symmetric factor in the rate matrix, $r_{XY}$, multipled by the destination state frequency.
-
-We can most clearly see that \pomo does not fit easily into a time-reversible framework by considering 
-    the transition $M_{IJ}^{0,1}$ vs $M_{IJ}^{1,0}$. 
-The former should be a very low rate constant reflecting the mutation rate.
-The latter involves the fixation of an allele at very high frequency.
-As Table S9 of  \cite{DeMaioSK2013} shows, these rates have different functional forms with respect to $N$ (the former is $N^2$; the latter is a function of $N^{-1}$).
-
-Nevertheless, we can create \pomo-inspired reversible model by using
-    $s_I= s_J$ for all $I$ and $J$, and then using the Eqn (4) of \cite{DeMaioSK2013}
-    as the basis for the equilibrium state frequencies:
-\begin{eqnarray}
-\pi_{IJ}^{(i)} & = & \frac{\polyProb}{\Knorm }\left(
-    \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right) \hskip 4em \forall i: 0<i<N \label{stateFreqPoly}\\
-    \Knorm  & = & \sum_I \sum_{J > I}\sum_{i=1}^{N-1} \left(
-    \frac{\pi_J\mu_{JI}}{i} + \frac{\pi_I\mu_{IJ}}{N-i}\right) \\
-    & = & \sum_I \sum_{J > I}\sum_{i=1}^{N-1} \left(
-    \frac{N\pi_I\pi_J r_{IJ}}{i(N-i)}\right) \\
-    & = & \sum_I \sum_{J > I}\left(N\pi_I\pi_J r_{IJ} \left[\sum_{i=1}^{N-1} \frac{1}{i(N-i)}\right]\right) \\
-    & = &  N\left[\sum_{i=1}^{N-1} \frac{1}{i(N-i)}\right]\left(\sum_I \sum_{J > I}\pi_I\pi_J r_{IJ}\right) \label{KnormDef}
-\end{eqnarray}
-with the equilibrium frequency of being monomorphic for state $I$ is:
-\begin{eqnarray}
-    \pi_{IJ}^{(N)} = \pi_I(1-\polyProb) \label{monoStateFreq}
-\end{eqnarray}
-for any $J$,
-as assumed for the root state frequencies (on page 2259 of \cite{DeMaioSK2013}).
-
-Eqn(1) of \cite{DeMaioSK2013} is:
-\begin{eqnarray}
- M_{IJ}^{i,i+1}  = \frac{i(1 + s_J - s_I)}{i(1 + s_J - s_I)+(N-i)}\times\frac{N-i}{N}
-\end{eqnarray}
-and their Eqn(2) is:
-\begin{eqnarray}
- M_{IJ}^{i,i-1}  = \frac{N-i}{i(1 + s_J - s_I)+(N-i)}\times\frac{i}{N}
-\end{eqnarray}
-Setting $s_I=s_J$ simplifies these equations by changing $(1 + s_J - s_I)$ to 1 such that the become equal to each other:
-\begin{eqnarray}
- M_{IJ}^{i,i+1}  = M_{IJ}^{i,i-1} & = & \frac{i(N-i)}{N^2}
-\end{eqnarray}
-with the corresponding elements of the $Q$-matrix for 
-    transititions between polymorphic states are simply
-    these elements multiplied by $N$:
-\begin{eqnarray}
-    Q_{IJ}^{i,i+1}  = Q_{IJ}^{i,i-1} & = & \frac{i(N-i)}{N} \label{polyQPair}
-\end{eqnarray}
-
-If we further think of the state frequencies being driven by a mutation rate composed of a product
-    the nucleotide relative frequency and symmetric relative rate of interchange:
-\begin{eqnarray}
- \mu_{IJ} & = &\pi_J r_{IJ} \\
- \mu_{JI} & = &\pi_I r_{IJ} 
-\end{eqnarray}
-then equation \ref{stateFreqPoly} becomes:
-\begin{eqnarray}
-\pi_{IJ}^{(i)} & = & \frac{\polyProb}{\Knorm }\left( \frac{\pi_J\pi_I r_{IJ}}{i} + \frac{\pi_I\pi_J r_{IJ}}{N-i}\right) \nonumber\\
-     \pi_{IJ}^{(i)} & = & \frac{\polyProb}{\Knorm }\left( \frac{N\pi_I\pi_J r_{IJ}}{i(N-i)}\right) \label{polyStateFreqSimplified}
-\end{eqnarray}
-
-We can verify the time-reversibility of the $Q$-matrix in \ref{polyQPair} for the $i$ and $i+1$ pair:
-\begin{eqnarray}
-    \pi_{IJ}^{(i)} Q_{IJ}^{i,i+1} & = & \pi_{IJ}^{(i+1)} Q_{IJ}^{i+1,i} \nonumber \\
-    \left( \frac{N\pi_I\pi_J r_{IJ}}{i(N-i)}\right) \left(\frac{i(N-i)}{N}\right) & = & \left( \frac{N\pi_I\pi_J r_{IJ}}{(i+1)(N-i-1)}\right)\left(\frac{(1+i)(N-i-1)}{N}\right) \nonumber
-\end{eqnarray}
-
-As with \pomo, for any transition involving a change of allele count $>1$, we set transition rates to be 0.
-
-So to complete the $Q$-matrix we need the rates of entering the polymorphic state from a fixed state.
-We can base the $1\leftrightarrow 0$, transition rates on the \pomo by adopting 
-    the same transition rate for leaving the monomorphic state and
-    then solving for the symmetric factor of the rate matrix, $r_{IJ}^{0,1}$
-\begin{eqnarray}
-    Q_{IJ}^{0,1} & = & N^2 \mu_{JI}  \label{toDiallelicQEl}\\
-    Q_{IJ}^{0,1} & = & \pi_{IJ}^{(1)} r_{IJ}^{0,1} \nonumber\\
-    \pi_{IJ}^{(1)} r_{IJ}^{0,1}& = & N^2 \mu_{JI}  \nonumber \\
-    r_{IJ}^{0,1}& = & \frac{N^2 \mu_{JI}}{\pi_{IJ}^{(1)}}
-\end{eqnarray}
-Substituting the state frequency for the polymorphic state from Eqn (\ref{polyStateFreqSimplified}), we get:
-\begin{eqnarray}
-    r_{IJ}^{0,1} & = & \frac{\Knorm N^2 \mu_{JI}(N-1)}{\polyProb N\pi_I\pi_J r_{IJ}} \nonumber \\
-    & = & \frac{\Knorm N^2 \pi_{I}r_{IJ}(N-1)}{\polyProb N\pi_I\pi_J r_{IJ}} \nonumber \\
-                 & = & \frac{\Knorm N(N-1)}{\polyProb \pi_J} 
-\end{eqnarray}
-This provides us with a value for, $Q_{IJ}^{1,0}$, the fixation of state $I$, if we use Eqn(\ref{monoStateFreq}) for the equilibrium state frequency of the root state:
-\begin{eqnarray}
-    Q_{IJ}^{1,0} & = & \pi_{IJ}^{(0)} r_{IJ}^{0,1} \nonumber \\
-                 & = & \left(\pi_J(1-\polyProb)\right)\left(\frac{\Knorm N(N-1)}{\polyProb \pi_J} \right) \nonumber \\
-                 & = & \frac{\Knorm (1-\polyProb)N(N-1)}{\polyProb } \label{toMonomorphicQEl}
-\end{eqnarray}
-
-The non-zero elements of the transition rate matrix are thus given in equations \ref{polyQPair}, \ref{toDiallelicQEl}, and \ref{toMonomorphicQEl}.
-The equilibrium (and root) state frequencies are given by equations \ref{polyStateFreqSimplified} and \ref{monoStateFreq}.
-
-The free parameters are:
-\begin{compactitem}
-    \item[$\bullet$] the 5 relative mutation rates $\mu_{IJ}$ for all $I,J$ except the reference rate (usually the G$\leftrightarrow$T rate which is set to scale the rate matrix to the a standard expected rate of state-transitions).
-    \item[$\bullet$] the 3 free base frequencies, $\pi_i$
-    \item[$\bullet$] $\polyProb$. The MLE of $\polyProb$ could not be reliably estimated by \cite{DeMaioSK2013}, presumably because it only
-    affected the likelihood via its affect on the weighting of states at the root.
-    In our neutral variant, it appears in the transition rates at the boundary of the polymorphic/nonpolymorphic state pairs.
-    Thus it will be a proxy for a scaled mutation rate, and should be more strongly identified by the data.
-\end{compactitem}
-
-The variables which appear in the model, but which are not parameters in the statistical sense:
-\begin{compactitem}
-    \item[$\bullet$] $\virtPopSize$, the virtual population size. the number of states scales linearly with this.
-    This binning terms controls the accuracy of the approximation to continuous model 
-    \item[$\bullet$] $\pi_{IJ}^{(i)}$ - a deterministic funtion of the parameters and \virtPopSize. See Eqns \ref{polyStateFreqSimplified} and \ref{monoStateFreq}.
-    \item[$\bullet$] $\Knorm$ - a deterministic funtion of the parameters and \virtPopSize. See Eqn(\ref{KnormDef}).
-\end{compactitem}
-
-\subsection*{Summarizing $Q$ matrix and state frequency calculations}
-\begin{itemize}
-  \item by eqn \ref{polyQPair} for all transitions were $i$ and its neighboring are not $0$ or $N$ we have:
-    $$Q_{IJ}^{i,i+1}  = Q_{IJ}^{i,i-1} & = & \frac{i(N-i)}{N}$$
-  \item by \ref{toDiallelicQEl}, introduction of new allele $I$ (from the state of fixed for $J$) is:
-    $$Q_{IJ}^{0,1} & = & N^2 \pi_I r_{JI} $$ 
-  \item by \ref{toMonomorphicQEl}, loss of the only copy of allele $I$ (leaving the population fixed for $J$) is: 
-    $$Q_{IJ}^{1,0} =  \frac{\Knorm (1-\polyProb)N(N-1)}{\polyProb }$$
-   where $\polyProb$ is a free parameter that is the stationary probability of being in a diallelic state, and (by eqn \ref{KnormDef}):
-    $$\Knorm = N\left[\sum_{i=1}^{N-1} \frac{1}{i(N-i)}\right]\left(\sum_I \sum_{J > I}\pi_I\pi_J r_{IJ}\right) $$
-  \item The diagonal elements are -1 times the sum of all elements in that row.
-  \item all other elements of $Q$ are 0.
-  \item by eqn \ref{monoStateFreq} the frequency of a monomorphic state: 
-     $$\pi_{IJ}^{(N)} = \pi_{JI}^{(0)} = \pi_I(1-\polyProb) $$
-    \item by eqn \ref{polyStateFreqSimplified} the frequency of a diallelic state: 
-     $$\pi_{IJ}^{(i)} & = & \frac{\polyProb}{\Knorm }\left( \frac{N\pi_I\pi_J r_{IJ}}{i(N-i)}\right) $$
-\end{itemize}
-
-\section{Transforming data}
-We have sample $M$ species, and have $S_m$ individuals sampled from species $m$.
-Assuming that each site is a random draw from the species current state is simple, though it ignores
-    linkage disequilibrium between sites.
-
-We can recode the $S_m$ sequences for species $m$ into a vector of tuples, $X_m^{(kk)}$ which 
-    summarizes all of the sequence data for species $m$ at site $k$.
-
-Each tuple has two or three elements.
-
-The first element, $Z_m^{(k)}$, is an {\tt enum} style type designator which specifies what nucleotides are observed.
-The valid facets for this {\tt enum} are: \texttt{A}, \texttt{C}, \texttt{G}, \texttt{T}, \texttt{AC}, \texttt{AG}, \texttt{AT}, \texttt{CG}, \texttt{CT}, and \texttt{GT}, \texttt{Missing}.
-The first 4 describe sites that are monomorphic in a species.
-The next six are the diallelic states.
-The final state is used if none of the sequences from the species is scored for all sites.
-
-If any species displays $>2$ states, then the likelihood will be 0 under our \pomo-like model.
-So the processing should abort.
-
-Let $S_m^{(k)}$ denote $S_m$ minus the number of sequences from species $m$ that have a missing data code at site $k$. 
-So $S_m^{(k)}$ is the species sampling at this site.
-
-If the type designator is monomorphic, then the other element of the tuple is $Y_m^{(k,0)}$, which is the number of sequences sampled from species $m$ that display the indicated state at site $k$.
-$Y_m^{(k,0)}$ will be $S_m^{(k)}$.
-
-
-If the type designator is diallelic, then there will be a two integers $Y_m^{(k,0)}$ and $Y_m^{(k,1)}$.
-They will sum to $S_m^{(k)}$, and they will simply be the count of sequences for this species that display the first and second state specified by the type designator.
-
-The phylogenetic tree will represent the $M$ species.
-
-The conditional likelihood value (aka ``partial likelihood value'') for species $m$ and site $k$ will be constant through the analysis.
-So the following values can be calculated upfront and stored in a constant cache;
-with $C_m^{(k)}$ indicating the values for species $m$ and site $k$.
-
-Up to this point, we have not established an ordering of the states of the \pomo-like model.
-
-Here, we'll use the syntax $C_m^{(k)}[^{i}_{IJ}]$ will be used to indicate the element of 
-    the tip partial likelihood that corresponds to a diallelic state for nucleotides $I$ and $J$
-    with $i$ virtual individuals in state $J$ and $N-i$ individual in state $J$.
-
-$C_m^{(k)}[I]$ will be used to indicate the element of 
-    the tip partial likelihood that corresponds to a monomorphic state with all $\virtPopSize$
-    individuals corresponding to state $I$.
-
-We'll also use $\ast$ as a wildcard in this partial likelihood indexing.
-
-\subsection*{$Z_m^{(k)}$ is \texttt{Missing}}
-If $Z_m^{(k)}$ is \texttt{Missing}, then all elements of $C_m^{(k)}$ will be set to a probability of 1. So
-\begin{compactitem}
-    \item[$\bullet$] $C_m^{(k)}[\ast]=1.0$
-\end{compactitem}
-
-\subsection*{$Z_m^{(k)}$ is Diallelic}
-If $Z_m^{(k)}$ is a diallelic code for with the first state denoted $Z_I$ and the second $Z_J$, then:
-\begin{compactitem}
-    \item[$\bullet$] $C_m^{(k)}[*] = 0$  (no monomorphic states explain the data)
-    \item[$\bullet$] $C_m^{(k)}[^{\ast}_{IJ}] = 0$  if $I\neq Z_I$ or $J\neq Z_J$
-    \item[$\bullet$] if $I = Z_I$ and $J = Z_J$, then
-     $$C_m^{(k)}[^{i}_{IJ}] = {S_m^{(k)} \choose Y_m^{(k,0)}} (\virtPopSize - i)^{Y_m^{(k,0)}}i^{Y_m^{(k,1)}} \virtPopSize^{-S_m^{(k)}}$$
-     which is simply the probability of the of the observed data from based on the binomial distribution.
-     Note that the ``choose'' factor and the $ \virtPopSize^{-S_m^{(k)}}$ factors are constant for all values of $i$. So it could be dropped (because the likelihood need only be proportional to the probability of the data under the model).
-\end{compactitem}
-
-
-\subsection*{$Z_m^{(k)}$ is Monomorphic}
-If $Z_m^{(k)}$ is a monomorphic code for the state $Z_I$ then:
-\begin{compactitem}
-    \item[$\bullet$] $C_m^{(k)}[I] = 0$ if $I\neq Z_I$
-    \item[$\bullet$] $C_m^{(k)}[I] = 1$ if $I = Z_I$
-    \item[$\bullet$] $C_m^{(k)}[^{\ast}_{IJ}] = 0$  if $I\neq Z_I$ and $J\neq Z_I$
-    \item[$\bullet$] if $I = Z_I$
-     $$C_m^{(k)}[^{i}_{IJ}] = \left(\frac{\virtPopSize - i}{\virtPopSize}\right)^{S_m^{(k)}}$$
-    \item[$\bullet$] if $J = Z_I$, then
-        $$C_m^{(k)}[^{i}_{IJ}] = \left(\frac{i}{\virtPopSize}\right)^{S_m^{(k)}}$$
-\end{compactitem}
-Note that the $ \virtPopSize^{-S_m^{(k)}}$ factors are constant for all values of $i$, but they 
-     {\em cannot} be omitted because it does not occur in the $C_m^{(k)}[I]$ case.
-
-\begin{compactitem}
-\end{compactitem}
-
-\section{To Do}
-\begin{compactitem}
-    \item Need to figure out how to scale the matrix to give branch lengths in expected \# subst/site
-\end{compactitem}
-
-\section{Some generalizations}
-A generalization to multi-allelic sites is fairly straightforward, leading to a 14-state
-    (for mono-, di-, and tri-allelic sites) a fully generic version with at least 15 states.
-One question that arises in the abstract form of the model contemplated here, is whether mutation
-    to a tri- or quad-allelic state can take place from any allele, or only from the most-frequent
-    allele.
-
-Here $\triPomoState{I}{J}{K}{N_I}{N_J}$ is the notation for $N_I$ copies of allele $I$, $N_J$ copies
-    of allele $J$, and $\virtPopSize-N_I -N_J$ copies of allele $K$ when discussing tri-allelic states.
-The most generic notation uses all four bases: $\quadPomoState{N_A}{N_C}{N_G}$ where $N_T$ would be $\virtPopSize-N_A - N_C - N_G$
-
-If the different frequency bins of the states are interpreted as frequencies in a population, then
-    it makes sense of the rate of transition to be simply reflect the frequency of the source allele 
-    and the destination allele.
-In a more abstract model (one with less of a tie to a sensible pop-gen perspective), one might view
-    the state adjacent to the monomorphic state as primarily accommodating situations in which one
-    allele is at very low frequency.
-Any new mutation is likely to occur in the most frequent allele, thus the new mutation will be
-    adding allele, never swapping one low-frequency allele for another.
-This has to do with whether it is possible to transition directly from state $\pomoState{I}{J}{N-1}$ to
-    $\pomoState{I}{K}{N-1}$ is allowed.
-If these $N-1$ frequency states are viewed as proxies for cases of very low-frequency alleles, then 
-    it is reasonable to prohibit these transitions and force either:
-    $\pomoState{I}{J}{N-1} \leftrightarrow \pomoState{I}{\ast}{N} \leftrightarrow \pomoState{I}{K}{N-1}$
-    or $\triPomoState{I}{J}{K}{N-1}{1} \leftrightarrow \triPomoState{I}{J}{K}{N-2}{1} \leftrightarrow \triPomoState{I}{J}{K}{N-1}{0}$
-
-Table \ref{taxonomy} shows a taxonomy of \pomo-like models with the following column interpreations:
-\begin{itemize}
-    \item \textbf{Maximum \# alleles} present in species at any point: {\em 2}, {\em 3}, or {\em 4}
-    \item \textbf{Treatment of polymorphism possible}: Only distinguishing between {\em variability} vs
-    actually displaying {\em frequency} differences between states.
-    \item \textbf{The source of the derivation of the rates}: base frequency {\em selection}, {\em neutrality}, or {\em abstract} (parameterizations that lack a clear population genetics interpretation).
-    \item \textbf{Time Reversibility} {\em Yes} or {\em No}
-    \item \textbf{Treatment of the $\virtPopSize -1$ and $1$ frequency states} As a {\em virtual} population size vs as a bin for very {\em low} frequency alleles.
-    \item \textbf{$\virtPopSize$} the size of the virtual population, or $\ast$ if this is not internally consistent over the model
-    \item \textbf{Total number of states}
-\end{itemize}
-\begin{table}
-    \caption{A taxonomy of \pomo-like models.}\label{taxonomy}
-        \begin{tabular}{r|c|c|c|c|c|r|r}
-                           & max.~\# & polymorph.& source of & time & $(\virtPopSize -1)$ or 1  & & total \#\\
-        Name               & alleles & treatment & rates     & rev. & treatment                 & $\virtPopSize $& states\\
-        \hline
-        DiVarAbsRevLow-2-10   & 2 & variability &abstract & Yes   & low & 2 & 10\\
-        \hline
-        QuadVarAbsRevLow-$\ast$-15 & 4 & variability &abstract & Yes   & low & $\ast$ & 15\\
-        \hline
-        \end{tabular}
-    \begin{center}
-    \end{center}
-\end{table}
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[scale=1]{images/10-state.pdf}
-        \caption{DiVarAbsRevLow-2-10: Simplest \pomo-like model with just $\virtPopSize=2$. Diallelic states shown as smaller points. Monomorphic states as larger black circles.}\label{pomoDiVarAbsRevLow}
-    \end{center}
-\end{figure}
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[scale=1]{images/15-state.pdf}
-        \caption{QuadVarAbsRevLow-$\ast$-15: Simplest general \pomo-like model with just $\virtPopSize=2$ for diallelic, 3 for triallelic and 1 state for the four-allele condition. Size so circle is used to denote the number of alleles (monomorphic are the largest). 15 total states.}\label{pomoQuadVarAbsRevLow}
-    \end{center}
-\end{figure}
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[scale=1]{images/35-state.pdf}
-        \caption{QuadFreqAbsRevLow-4-35: Simplest general \pomo-like model with just $\virtPopSize=4$ that is internally consistent with repsect to $\virtPopSize$ and which models frequency of alleles (when in the diallelic condition and tri-allelic conditions). The blue arcs connect to the 4-allele state. The red arc  make other connections to the tri-allelic state)}\label{pomoQuadVarAbsRevLow}
-    \end{center}
-\end{figure}
-
-\newpage
 \section*{low-,mid-,high- binning}
 In the context of deeper-time phylogenetics, the time scale of drift
     is expected to be much faster than the mutation rate.
 With the exception of the very short branches of tree, the increase
     in state-space caused by relatively fine-scaled binning of frequencies
-    into $N+1$ bins seems like it could be overkill.
+    into several bins seems like it could be overkill.
 
-One could simplify the model as follows:
-\begin{compactitem}
+
+\subsection*{Notation}
+\begin{compactenum}
+    \item $N$ is the size of the virtual population.
+    \item $\pi_I$ is the frequency of nucleotide $I$ in the mutational model.
+    \item $r_{IJ}$ is the symmetric factor in the mutational model. So $\mu_{IJ} = \pi_J r_{IJ}$ and $\mu_{JI} = \pi_I r_{IJ}$
+    \item $\pi_{IJ}^{(x)}$ denotes the state frequency of the virtual population consisting of  $x$ copies of nucleotide $I$ and $N-x$ copies of $J$.
+    \item $r_{IJ}^{x,y}$ denotes the symmetric factor of the instantaneous rate associated
+    with moving from between a virtual popultion of $x$ copies of $I$ and $N-x$ copies of 
+    $J$ to a virtual population with $y$ copies of $I$ and $N-y$ copies of $J$
+    \item $q_{IJ}^{x,y}$ denotes the instantaneous rate associated
+    with moving from between a virtual popultion of $x$ copies of $I$ and $N-x$ copies of 
+    $J$ to a virtual population with $y$ copies of $I$ and $N-y$ copies of $J$.
+    By time reversibility: $q_{IJ}^{x,y} = \pi_{IJ}^{(y)}r_{IJ}^{x,y}$
+\end{compactenum}
+
+\section*{LMH-PoMo}
+One could simplify the full PoMO model as follows:
+\begin{compactenum}
     \item $N$ is a fixed-by-the-user virtual population size.
     \item In the diallelic condition, the first allele in the subscript is binned into $l$ (low = $1/N$), $m$ (mid=0.5), and $h$ (high= $(N-1)/N$) frequencies
-\end{compactitem}
-the 22 states would be:
-\begin{compactitem}
+\end{compactenum}
+Here we call this LMH-PoMo (for ``low-, medium-, high- frequency bin PoMo'').
+
+
+
+To cover the case of at most 2 alleles per species, there would be 22 states would be:
+\begin{compactenum}
     \item The 4 monomorphic states: $S_{A\ast}^{(N)}, S_{C\ast}^{(N)}, S_{G\ast}^{(N)}, $and $ S_{T\ast}^{(N)}$.
     \item The 18 dimorphic states. For the 6 pairs of nucleotides, there would be 3 polymorphic bins: $S_{AC}^{(1)}, S_{AC}^{(N/2)}, S_{AC}^{(N-1)}$.
-\end{compactitem}
+\end{compactenum}
 
 
-Because this coarse binning breaks the tight connections with the population genetics underpinning, one could estimate an extra parameter to generate the state frequencies, and $Q$ matrix:
+
+\subsection*{Parameterization}
+
+This coarse binning breaks the easy connections with the population genetics underpinning.
+However, we expect to have quite a bit of data, so we
+could estimate an extra parameter to generate the state frequencies, and $Q$ matrix:
 \begin{compactitem}
     \item The 3 free parameters needed to yield the 4 equilibrium frequency of the mutation process: $1 = \pi_A + \pi_C + \pi_G + \pi_T$
     \item The 5 free parameters needed to yield the 6 symmetric factors of the GTR rate matrix:  $\{r_{AC}$, $r_{AG}$, $r_{AT}$, $r_{CG}$, $r_{CT}$, $r_{GT}\}$
-    \item $\phi$ the equilibrium probability of being in the diallelic state, and
-    \item a new frequency parameter, $\psi = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(N-1)} = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(1)}$; This govens the relative abundance of the mid-frequency bin states. 
-    \item a new symmetric rate factor: $r_{lm} = r_{mh}$
+    \item $\phi$ the equilibrium probability of being in a polymorphic condition, and
+    \item a new frequency parameter, $\psi = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(N-1)} = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(1)}$; This govens the relative abundance of the mid-frequency bin states, given that 
+    the state corresponds to a polymorphic condition.
+    \item a new symmetric rate factor: $\rho$ that governs the relative rate of drift between states that correspond to polymorphic for the same pair of nucleotides
 \end{compactitem}
 
 \subsection*{Summarizing $Q$ matrix and state frequency calculations for LMH-PoMo}
-\begin{itemize}
-  \item Monomorphic state freq: $$\pi_{IJ}^{(N)} = \pi_{JI}^{(0)} = \pi_I(1-\polyProb) $$
-  \item The simplification of the normalizing constant is:
-  $$\Klmh = \sum_I\sum_{J > I}\pi_I\pi_J r_{IJ}$$
-  \item A low- or high-frequency diallelic state: 
-     $$\pi_{IJ}^{(1)} = \pi_{IJ}^{(N-1)} & = & \frac{\polyProb}{\Klmh }\left( \frac{\pi_I\pi_J r_{IJ}}{2 + \psi}\right) $$
-  \item the mid-frequency diallelic state: 
-     $$\pi_{IJ}^{(N/2)} & = & \frac{\polyProb}{\Klmh }\left( \frac{\pi_I\pi_J r_{IJ}\psi}{2 + \psi}\right) $$
-  \item by eqn \ref{polyQPair} for all transitions were $i$ and its neighboring are not $0$ or $N$ we have:
-    $$Q_{IJ}^{lm}  $$
-  \item by \ref{toDiallelicQEl}, introduction of new allele $I$ (from the state of fixed for $J$) is:
-    $$Q_{IJ}^{0,1} & = & N^2 \pi_I r_{JI} $$ 
-  \item by \ref{toMonomorphicQEl}, loss of the only copy of allele $I$ (leaving the population fixed for $J$) is: 
-    $$Q_{IJ}^{1,0} =  \frac{\Knorm (1-\polyProb)N(N-1)}{\polyProb }$$
-   where $\polyProb$ is a free parameter that is the stationary probability of being in a diallelic state, and (by eqn \ref{KnormDef}):
-    $$\Knorm = N\left[\sum_{i=1}^{N-1} \frac{1}{i(N-i)}\right]\left(\sum_I \sum_{J > I}\pi_I\pi_J r_{IJ}\right) $$
-  \item The diagonal elements are -1 times the sum of all elements in that row.
-  \item all other elements of $Q$ are 0.
-  \item by eqn \ref{monoStateFreq} the frequency of a monomorphic state: 
-     $$\pi_{IJ}^{(N)} = \pi_{JI}^{(0)} = \pi_I(1-\polyProb) $$
-    \item by eqn \ref{polyStateFreqSimplified} 
-\end{itemize}
+
+Monomorphic state freq: 
+\begin{equation}
+    \pi_{IJ}^{(N)} = \pi_{JI}^{(0)} = \pi_I(1-\polyProb)
+\end{equation}
+
+The normalizing constant for comparing the frequencies of different polymorphic states becomes:
+\begin{equation}
+    \Klmh = \sum_I\sum_{J > I}\pi_I\pi_J r_{IJ}
+\end{equation}
+such that:
+    $$\Pr(\mbox{polymorphic for }I, J \mid \mbox{polymorphic}) = \frac{\pi_I\pi_J r_{IJ}}{\Klmh}$$
+
+By the definition of the parameter $\phi$, this leads to:
+    $$\Pr(\mbox{polymorphic for }I, J) = \frac{\phi\pi_I\pi_J r_{IJ}}{\Klmh}$$
+
+Given that the system is in a polymorphic condition, the probablity of being in a low frequency bin is 
+    $$\Pr(\mbox{freq =} 1 \mid \mbox{polymorphic}) = \Pr(\mbox{freq =} N -1 \mid \mbox{polymorphic}) = \frac{1}{2 + \psi}.$$
+This is also the probability of being in a high frequency bin.
+The corresponding probability for the being assigned to the mid-frequency bin is 
+$$\Pr(\mbox{freq =} N/2 \mid \mbox{polymorphic}) =  \frac{\psi}{2 + \psi}.$$
+
+Thus, the equilibrium frequency of a low- frequency diallelic state is: 
+\begin{equation}
+    \pi_{IJ}^{(1)} = \pi_{IJ}^{(N-1)}  =  \frac{\polyProb\pi_I\pi_J r_{IJ}}{\Klmh (2 + \psi)}
+\end{equation}
+
+The mid-frequency diallelic state: 
+\begin{equation}
+    \pi_{IJ}^{(N/2)} = \frac{\polyProb\pi_I\pi_J r_{IJ}\psi}{\Klmh (2 + \psi)} 
+\end{equation}
+
+
+All elements of $Q$ are 0 between ``non-adjacent'' states are 0.
+
+The diagonal element of the $Q$ matrix is the negative sum of the other elements.
+
+The rate of mutation to introduce state $J$:
+\begin{equation}
+   Q_{IJ}^{N,N-1} = \mu_{IJ} = \pi_J r_{IJ}.
+\end{equation}
+In PoMo this includes a factor of $N$, but in our parameterization with $\phi$ as a free parameter, the effect of $N$ simply changes the MLE of $\phi$.
+
+Exploiting time-reversibility:
+\begin{eqnarray}
+    Q_{IJ}^{N,N-1} & = & \pi_J r_{IJ} \nonumber\\
+    & = & \pi_{IJ}^{(N-1)} r_{IJ}^{N, N-1} \nonumber\\
+\end{eqnarray}
+which enables us to solve for the reversible factor in the introduction/loss of polymorphism
+\begin{eqnarray}
+  r_{IJ}^{N, N-1} & = & \frac{\pi_J r_{IJ}}{ \pi_{IJ}^{(N-1)}} \nonumber\\
+  & = & \frac{\pi_J r_{IJ}\Klmh (2 + \psi)}{ \polyProb\pi_I\pi_J r_{IJ}} \nonumber \\
+  & = & \frac{\Klmh (2 + \psi)}{ \polyProb\pi_I}
+\end{eqnarray}
+
+So the loss of  $J$ to become monomorphic for state $I$ is
+\begin{eqnarray}
+   Q_{IJ}^{N-1,N} & = & r_{IJ}^{N, N-1} \pi_{IJ}^{(N)} \nonumber \\
+    & = & \frac{\Klmh (2 + \psi)}{ \polyProb\pi_I} \pi_I (1 -\phi) \nonumber \\
+    & = & \frac{(1 -\phi) \Klmh (2 + \psi)}{ \polyProb}
+\end{eqnarray}
+
+The transitions between the polymorphic states is determined by the new drift parameter:
+\begin{eqnarray}
+   Q_{IJ}^{N-1,N/2} = Q_{IJ}^{1,N/2} & = & \frac{\polyProb\pi_I\pi_J r_{IJ}\psi \rho}{\Klmh (2 + \psi)} \\
+   Q_{IJ}^{N/2,N-1} = Q_{IJ}^{N/2,1} & = & \frac{\polyProb\pi_I\pi_J r_{IJ} \rho}{\Klmh (2 + \psi)} 
+\end{eqnarray}
+
 
 
 
