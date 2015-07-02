@@ -1,0 +1,203 @@
+% This is LLNCS.DEM the demonstration file of
+% the LaTeX macro package from Springer-Verlag
+% for Lecture Notes in Computer Science,
+% version 2.4 for LaTeX2e as of 16. April 2010
+%
+\documentclass{llncs}
+%
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{pdfpages}
+\usepackage{graphicx}
+\usepackage{paralist}
+\usepackage{xspace}
+\usepackage{paralist}
+\usepackage{bm}
+\usepackage{algorithm,algorithmic}
+\setlength{\parindent}{0}
+\setlength{\parskip}{0.5em}
+\newcommand{\numOTUs}{\ensuremath{L}}
+\newcommand{\numSites}{\ensuremath{K}}
+\newcommand{\numSp}{\ensuremath{M}}
+\newcommand{\numObsStates}{\ensuremath{k}}
+\newcommand{\virtPopSize}{\ensuremath{N}}
+\newcommand{\polyProb}{\ensuremath{\phi}}}
+\newcommand{\pomoState}[3]{\ensuremath{\mathcal{S}_{#1#2}^{#3}}}}
+\newcommand{\triPomoState}[5]{\ensuremath{\mathcal{S}_{#1#2#3}^{#4,#5}}}}
+\newcommand{\quadPomoState}[3]{\ensuremath{\mathcal{S}_{\texttt{ACGT}}^{#1,#2,#3}}}}
+\newcommand{\Knorm}{\ensuremath{K}}}
+\newcommand{\Klmh}{\ensuremath{K_{LMH}}}}
+\newcommand{\pomo}{PoMo\xspace}
+% from http://tex.stackexchange.com/a/33547
+\newcommand{\appropto}{\mathrel{\vcenter{
+              \offinterlineskip\halign{\hfil$##$\cr
+                      \propto\cr\noalign{\kern2pt}\sim\cr\noalign{\kern-2pt}}}}}
+\DeclareMathOperator*{\argmax}{\arg\!\max}
+\usepackage{hyperref}
+\hypersetup{backref,  linkcolor=blue, citecolor=red, colorlinks=true, hyperindex=true}
+%
+\begin{document}
+\title{A \pomo-like model for large-scale phylogenetics}
+\titlerunning{POMO implementation}
+\author{Mark T.~Holder\inst{1,2}\and Alexandros Stamatakis\inst{1,3}}
+\authorrunning{Author 1 et al.} % abbreviated author list
+%\tocauthor{Author 1, Author 2}
+\institute{1. HITS gGmbH,\\2. Univ.~Kansas\\3. KIT}\\
+%\email{\{Authors\}@h-its.org} \and Institute 2,\\ Address, Country\\
+%\email{Author3@h-its.org}}
+%% Eumerating parts in aligned environments %%
+\newcommand\enum{\addtocounter{equation}{1}\tag{\theequation}}
+\maketitle              % typeset the title of the contribution
+\section {Motivation}
+This document is a section of \url{https://github.com/mtholder/pomo-like-model/blob/master/doc/pomo.tex}
+that was pulled out for the sake of briefer presentation.
+
+Large scale phylogenetic studies feature large numbers of species sampled with relatively few
+    individuals sampled per species.
+This sampling strategy make it difficult to examine the history of gene geneaologies with great precision, but 
+    discordance between gene trees and species trees motivates the need for developing methods
+    that recognize that polymorphism at the time of speciation can result in patterns of fixation
+    that look like homoplasy when mapped onto the species tree.
+
+The \pomo model of \cite{DeMaioSK2013} provides an elegant approximate method for dealing with polymorphism 
+    on species trees.
+\section*{low-,mid-,high- binning}
+In the context of deeper-time phylogenetics, the time scale of drift
+    is expected to be much faster than the mutation rate.
+With the exception of the very short branches of tree, the increase
+    in state-space caused by relatively fine-scaled binning of frequencies
+    into several bins seems like it could be overkill.
+
+
+\subsection*{Notation}
+\begin{compactenum}
+    \item $N$ is the size of the virtual population.
+    \item $\pi_I$ is the frequency of nucleotide $I$ in the mutational model.
+    \item $r_{IJ}$ is the symmetric factor in the mutational model. So $\mu_{IJ} = \pi_J r_{IJ}$ and $\mu_{JI} = \pi_I r_{IJ}$
+    \item $\pi_{IJ}^{(x)}$ denotes the state frequency of the virtual population consisting of  $x$ copies of nucleotide $I$ and $N-x$ copies of $J$.
+    \item $r_{IJ}^{x,y}$ denotes the symmetric factor of the instantaneous rate associated
+    with moving from between a virtual popultion of $x$ copies of $I$ and $N-x$ copies of 
+    $J$ to a virtual population with $y$ copies of $I$ and $N-y$ copies of $J$
+    \item $q_{IJ}^{x,y}$ denotes the instantaneous rate associated
+    with moving from between a virtual popultion of $x$ copies of $I$ and $N-x$ copies of 
+    $J$ to a virtual population with $y$ copies of $I$ and $N-y$ copies of $J$.
+    By time reversibility: $q_{IJ}^{x,y} = \pi_{IJ}^{(y)}r_{IJ}^{x,y}$
+\end{compactenum}
+
+\section*{LMH-PoMo}
+One could simplify the full PoMO model as follows:
+\begin{compactenum}
+    \item $N$ is a fixed-by-the-user virtual population size.
+    \item In the diallelic condition, the first allele in the subscript is binned into $l$ (low = $1/N$), $m$ (mid=0.5), and $h$ (high= $(N-1)/N$) frequencies
+\end{compactenum}
+Here we call this LMH-PoMo (for ``low-, medium-, high- frequency bin PoMo'').
+
+
+
+To cover the case of at most 2 alleles per species, there would be 22 states would be:
+\begin{compactenum}
+    \item The 4 monomorphic states: $A, C, G, T$.
+    \item The 18 dimorphic states. For the 6 pairs of nucleotides, there would be 3 polymorphic bins: $(c(I)=1, c(J)=N-1), (c(I)=N/2, c(J)=N/2), (c(I)=N-1, c(J)=1)$,
+        where $c(I)$ is the count of the number of individual in virtual population having state $I$.
+\end{compactenum}
+
+
+
+\subsection*{Parameterization}
+
+This coarse binning breaks the easy connections with the population genetics underpinning.
+However, we expect to have quite a bit of data, so we
+could estimate an extra parameter to generate the state frequencies, and $Q$ matrix:
+\begin{compactitem}
+    \item The 3 free parameters needed to yield the 4 equilibrium frequency of the mutation process: $1 = \pi_A + \pi_C + \pi_G + \pi_T$
+    \item The 5 free parameters needed to yield the 6 symmetric factors of the GTR rate matrix:  $\{r_{AC}$, $r_{AG}$, $r_{AT}$, $r_{CG}$, $r_{CT}$, $r_{GT}\}$
+    \item $\phi$ the equilibrium probability of being in a polymorphic condition, and
+    \item a new frequency parameter, $\psi = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(N-1)} = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(1)}$; This govens the relative abundance of the mid-frequency bin states, given that 
+    the state corresponds to a polymorphic condition.
+    \item a new symmetric rate factor: $\rho$ that governs the relative rate of drift between states that correspond to polymorphic for the same pair of nucleotides
+\end{compactitem}
+
+\subsection*{Summarizing $Q$ matrix and state frequency calculations for LMH-PoMo}
+
+Monomorphic state freq: 
+\begin{equation}
+    \pi_{IJ}^{(N)} = \pi_{JI}^{(0)} = \pi_I(1-\polyProb)
+\end{equation}
+
+The normalizing constant for comparing the frequencies of different polymorphic states becomes:
+\begin{equation}
+    \Klmh = \sum_I\sum_{J > I}\pi_I\pi_J r_{IJ}
+\end{equation}
+such that:
+    $$\Pr(\mbox{polymorphic for }I, J \mid \mbox{polymorphic}) = \frac{\pi_I\pi_J r_{IJ}}{\Klmh}$$
+
+By the definition of the parameter $\phi$, this leads to:
+    $$\Pr(\mbox{polymorphic for }I, J) = \frac{\phi\pi_I\pi_J r_{IJ}}{\Klmh}$$
+
+Given that the system is in a polymorphic condition, the probablity of being in a low frequency bin is 
+    $$\Pr(\mbox{freq =} 1 \mid \mbox{polymorphic}) = \Pr(\mbox{freq =} N -1 \mid \mbox{polymorphic}) = \frac{1}{2 + \psi}.$$
+This is also the probability of being in a high frequency bin.
+The corresponding probability for the being assigned to the mid-frequency bin is 
+$$\Pr(\mbox{freq =} N/2 \mid \mbox{polymorphic}) =  \frac{\psi}{2 + \psi}.$$
+
+Thus, the equilibrium frequency of a low- frequency diallelic state is: 
+\begin{equation}
+    \pi_{IJ}^{(1)} = \pi_{IJ}^{(N-1)}  =  \frac{\polyProb\pi_I\pi_J r_{IJ}}{\Klmh (2 + \psi)}
+\end{equation}
+
+The mid-frequency diallelic state: 
+\begin{equation}
+    \pi_{IJ}^{(N/2)} = \frac{\polyProb\pi_I\pi_J r_{IJ}\psi}{\Klmh (2 + \psi)} 
+\end{equation}
+
+
+All elements of $Q$ are 0 between ``non-adjacent'' states are 0.
+
+The diagonal element of the $Q$ matrix is the negative sum of the other elements.
+
+The rate of mutation to introduce state $J$:
+\begin{equation}
+   Q_{IJ}^{N,N-1} = \mu_{IJ} = \pi_J r_{IJ}.
+\end{equation}
+In PoMo this includes a factor of $N$, but in our parameterization with $\phi$ as a free parameter, the effect of $N$ simply changes the MLE of $\phi$.
+
+Exploiting time-reversibility:
+\begin{eqnarray}
+    Q_{IJ}^{N,N-1} & = & \pi_J r_{IJ} \nonumber\\
+    & = & \pi_{IJ}^{(N-1)} r_{IJ}^{N, N-1} \nonumber\\
+\end{eqnarray}
+which enables us to solve for the reversible factor in the introduction/loss of polymorphism
+\begin{eqnarray}
+  r_{IJ}^{N, N-1} & = & \frac{\pi_J r_{IJ}}{ \pi_{IJ}^{(N-1)}} \nonumber\\
+  & = & \frac{\pi_J r_{IJ}\Klmh (2 + \psi)}{ \polyProb\pi_I\pi_J r_{IJ}} \nonumber \\
+  & = & \frac{\Klmh (2 + \psi)}{ \polyProb\pi_I}
+\end{eqnarray}
+
+So the loss of  $J$ to become monomorphic for state $I$ is
+\begin{eqnarray}
+   Q_{IJ}^{N-1,N} & = & r_{IJ}^{N, N-1} \pi_{IJ}^{(N)} \nonumber \\
+    & = & \frac{\Klmh (2 + \psi)}{ \polyProb\pi_I} \pi_I (1 -\phi) \nonumber \\
+    & = & \frac{(1 -\phi) \Klmh (2 + \psi)}{ \polyProb}
+\end{eqnarray}
+
+The transitions between the polymorphic states is determined by the new drift parameter:
+\begin{eqnarray}
+   Q_{IJ}^{N-1,N/2} = Q_{IJ}^{1,N/2} & = & \frac{\polyProb\pi_I\pi_J r_{IJ}\psi \rho}{\Klmh (2 + \psi)} \\
+   Q_{IJ}^{N/2,N-1} = Q_{IJ}^{N/2,1} & = & \frac{\polyProb\pi_I\pi_J r_{IJ} \rho}{\Klmh (2 + \psi)} 
+\end{eqnarray}
+
+
+
+
+\bibliographystyle{splncs03}
+\bibliography{pomo}
+
+
+
+
+\end{document}
+
+\begin{algorithm} \caption{}\label{}
+\begin{algorithmic}
+\end{algorithmic}
+\end{algorithm}
