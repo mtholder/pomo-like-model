@@ -37,7 +37,7 @@
 \hypersetup{backref,  linkcolor=blue, citecolor=red, colorlinks=true, hyperindex=true}
 %
 \begin{document}
-\title{A \pomo-like model for large-scale phylogenetics}
+\title{A general implementation of the lmh-PoMo-like model}
 \titlerunning{POMO implementation}
 \author{Mark T.~Holder\inst{1,2}\and Alexandros Stamatakis\inst{1,3}}
 \authorrunning{Author 1 et al.} % abbreviated author list
@@ -49,24 +49,21 @@
 \newcommand\enum{\addtocounter{equation}{1}\tag{\theequation}}
 \maketitle              % typeset the title of the contribution
 \section {Motivation}
-This document is a section of \url{https://github.com/mtholder/pomo-like-model/blob/master/doc/pomo.tex}
+This document is an extension of:
+ \url{https://github.com/mtholder/pomo-like-model/blob/master/doc/lmh-pomo.tex}
 that was pulled out for the sake of briefer presentation.
 
-Large scale phylogenetic studies feature large numbers of species sampled with relatively few
-    individuals sampled per species.
-This sampling strategy make it difficult to examine the history of gene geneaologies with great precision, but 
-    discordance between gene trees and species trees motivates the need for developing methods
-    that recognize that polymorphism at the time of speciation can result in patterns of fixation
-    that look like homoplasy when mapped onto the species tree.
+In most phylogenetic datasets we do not anticipate having a lot of info
+    on polymorophism.
+Nor do we expect to see many cases in which a species shows more than 2 alleles
+    at a site.
 
-The \pomo model of \cite{DeMaioSK2013} provides an elegant approximate method for dealing with polymorphism 
-    on species trees.
-\section*{low-,mid-,high- binning}
-In the context of deeper-time phylogenetics, the time scale of drift
-    is expected to be much faster than the mutation rate.
-With the exception of the very short branches of tree, the increase
-    in state-space caused by relatively fine-scaled binning of frequencies
-    into several bins seems like it could be overkill.
+Nevertheless, the fact that PoMo would assign a likelihood of 0 to such cases, is
+    certainly a hurdle to use the general use of the model.
+
+Following the spirit of the data-driven approach described in the lmh-pomo.tex document,
+    this document will describe an model with only tenuous connections to the relevant
+    population genetics theory.
 
 
 \subsection*{Notation}
@@ -74,31 +71,37 @@ With the exception of the very short branches of tree, the increase
     \item $N$ is the size of the virtual population.
     \item $\pi_I$ is the frequency of nucleotide $I$ in the mutational model.
     \item $r_{IJ}$ is the symmetric factor in the mutational model. So $\mu_{IJ} = \pi_J r_{IJ}$ and $\mu_{JI} = \pi_I r_{IJ}$
-    \item $\pi_{IJ}^{(x)}$ denotes the state frequency of the virtual population consisting of  $x$ copies of nucleotide $I$ and $N-x$ copies of $J$.
-    \item $r_{IJ}^{x,y}$ denotes the symmetric factor of the instantaneous rate associated
-    with moving from between a virtual popultion of $x$ copies of $I$ and $N-x$ copies of 
-    $J$ to a virtual population with $y$ copies of $I$ and $N-y$ copies of $J$
-    \item $q_{IJ}^{x,y}$ denotes the instantaneous rate associated
-    with moving from between a virtual popultion of $x$ copies of $I$ and $N-x$ copies of 
-    $J$ to a virtual population with $y$ copies of $I$ and $N-y$ copies of $J$.
-    By time reversibility: $q_{IJ}^{x,y} = \pi_{IJ}^{(y)}r_{IJ}^{x,y}$
+    \item $\pi_{w,x,y,z}$ is the equilibrium frequency of a PoMo state that corresponds to
+        $w$ members of the virtual population having of \texttt{A}, 
+        $x$ members of the virtual population having of \texttt{C},
+        $y$ members of the virtual population having of \texttt{G}, 
+        $z$ members of the virtual population having of \texttt{T}. Note that $0\leq w, x, y, z$ and
+        $z = N- w- x-y$.
+    \item $r_{w,x,y,z}^{w^\prime,x^\prime,y^\prime,z^\prime}$ denotes the symmetric factor of the instantaneous rate associated with moving with a virtual population count vector $(w,x,y,z)\leftrightarrow\left({w^\prime,x^\prime,y^\prime,z^\prime}\right)$
+    \item $q_{w,x,y,z}^{w^\prime, x^\prime, y^\prime, z^\prime}$ denotes the
+    instantaneous rate of with moving with a virtual population count vector $(w,x,y,z)\rightarrow\left({w^\prime,x^\prime,y^\prime,z^\prime}\right)$.
+    By time reversibility:
+    $q_{w,x,y,z}^{w^\prime, x^\prime, y^\prime, z^\prime} = \pi_{w^\prime, x^\prime, y^\prime, z^\prime} r_{w,x,y,z}^{w^\prime,x^\prime,y^\prime,z^\prime}$
 \end{compactenum}
 
-\section*{LMH-PoMo}
-One could simplify the full PoMO model as follows:
+\section*{General-LMH-PoMo}
 \begin{compactenum}
     \item $N$ is a fixed-by-the-user virtual population size.
-    \item In the diallelic condition, the first allele in the subscript is binned into $l$ (low = $1/N$), $m$ (mid=0.5), and $h$ (high= $(N-1)/N$) frequencies
+    \item In the diallelic condition, the first allele in the subscript is binned into $l$ (low = $1/N$), $m_2$ (mid=0.5), and $h_2$ (high= $(N-1)/N$) frequencies
+    \item In the 3-allelic condition, the first allele in the subscript is binned into $l$ (low = $1/N$), $m_3$ (mid=1/3), and $h_3$ (high= $(N-2)/N$) frequencies
+    \item In the 4-allelic condition, the first allele in the subscript is binned into $l$ (low = $1/N$), $m_4$ (mid=0.25), and $h_4$ (high= $(N-3)/N$) frequencies
 \end{compactenum}
-Here we call this LMH-PoMo (for ``low-, medium-, high- frequency bin PoMo'').
 
 
-
-To cover the case of at most 2 alleles per species, there would be 22 states would be:
+This would yield 43 states:
 \begin{compactenum}
-    \item The 4 monomorphic states: $A, C, G, T$.
-    \item The 18 dimorphic states. For the 6 pairs of nucleotides, there would be 3 polymorphic bins: $(c(I)=1, c(J)=N-1), (c(I)=N/2, c(J)=N/2), (c(I)=N-1, c(J)=1)$,
-        where $c(I)$ is the count of the number of individual in virtual population having state $I$.
+    \item The 4 monomorphic states: $(N,0,0,0)$, $(0,N,0,0)$, $(0,0,N,0)$, and $(0,0,0,N)$.
+    \item The 18 dimorphic states. For each of the 6 pairs of nucleotides, there would be 3 polymorphic bins such as:
+    $(N-1, 1, 0, 0)$, $(N/2,N/2,0,0)$, and $(1, N-1, 0, 0)$.
+    \item There are 16 states with 3 alleles. For each of the 4 triples of nucleotides, there would be 4 states:
+    $(N-2, 1, 1, 0)$, $(1, N-2, 1, 0)$, $(1, 1, N-2, 0)$, and $(N/3, N/3, N/3, 0)$.
+    \item There are 4 states with all 4 alleles:
+    $(N-3, 1, 1, 1)$, $(1, N-3, 1, 1)$, $(1, 1, N-3, 1)$, $(1, 1, 1, N-3)$ and $(N/4, N/4, N/4, N/4)$.
 \end{compactenum}
 
 
@@ -111,11 +114,15 @@ could estimate an extra parameter to generate the state frequencies, and $Q$ mat
 \begin{compactitem}
     \item The 3 free parameters needed to yield the 4 equilibrium frequency of the mutation process: $1 = \pi_A + \pi_C + \pi_G + \pi_T$
     \item The 5 free parameters needed to yield the 6 symmetric factors of the GTR rate matrix:  $\{r_{AC}$, $r_{AG}$, $r_{AT}$, $r_{CG}$, $r_{CT}$, $r_{GT}\}$
-    \item $\phi$ the equilibrium probability of being in a polymorphic condition, and
-    \item a new frequency parameter, $\psi = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(N-1)} = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(1)}$; This govens the relative abundance of the mid-frequency bin states, given that 
+    \item $[\phi_1, \phi_2, \phi_3, \phi_4]$ sum to 1 and with $\phi_i$ representing the probability of being
+    a state that corresponds to the species showing $i$ states. 
+    \item The relative frequency parameter, $\psi = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(N-1)} = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(1)}$ is used as in lmh-PoMo.
+    This govens the relative abundance of the mid-frequency bin states, given that 
     the state corresponds to a polymorphic condition.
     \item a new symmetric rate factor: $\rho$ that governs the relative rate of drift between states that correspond to polymorphic for the same pair of nucleotides
 \end{compactitem}
+
+If $\phi_3 = \phi_4 = 0$ then $\phi_1, = 1- \phi_2$, this model reduces to the lmh-PoMo
 
 \subsection*{Summarizing $Q$ matrix and state frequency calculations for LMH-PoMo}
 
