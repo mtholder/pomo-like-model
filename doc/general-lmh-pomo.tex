@@ -245,83 +245,21 @@ For the diallelic, to 3-allelic, we demonstrate with one case (a new G allele fo
      & = & \frac{(N-1)K_3\left(3 + \psi\right)r_{AG}r_{AC}}{NK_2 \left(2 + \psi\right)\phi\left(r_{AC}r_{AG} + r_{AC}r_{CG} + r_{AG}r_{CG} \right)}
 \end{eqnarray}
 
-\bibliographystyle{splncs03}
-\bibliography{pomo}
-
-
-
-
-\end{document}
-
-
-\subsection*{Summarizing $Q$ matrix and state frequency calculations for LMH-PoMo}
-
-Monomorphic state freq: 
-\begin{equation}
-    \pi_{IJ}^{(N)} = \pi_{JI}^{(0)} = \pi_I f_1
-\end{equation}
-
-The normalizing constant for comparing the frequencies of different polymorphic states becomes:
-\begin{equation}
-    \Klmh = \sum_I\sum_{J > I}\pi_I\pi_J r_{IJ}
-\end{equation}
-
-
-such that:
-    $$\Pr(\mbox{polymorphic for }I, J \mid \mbox{polymorphic}) = \frac{\pi_I\pi_J r_{IJ}}{\Klmh}$$
-
-By the definition of the parameter $\phi$, this leads to:
-    $$\Pr(\mbox{polymorphic for }I, J) = \frac{\phi\pi_I\pi_J r_{IJ}}{\Klmh}$$
-
-Given that the system is in a polymorphic condition, the probablity of being in a low frequency bin is 
-    $$\Pr(\mbox{freq =} 1 \mid \mbox{polymorphic}) = \Pr(\mbox{freq =} N -1 \mid \mbox{polymorphic}) = \frac{1}{2 + \psi}.$$
-This is also the probability of being in a high frequency bin.
-The corresponding probability for the being assigned to the mid-frequency bin is 
-$$\Pr(\mbox{freq =} N/2 \mid \mbox{polymorphic}) =  \frac{\psi}{2 + \psi}.$$
-
-Thus, the equilibrium frequency of a low- frequency diallelic state is: 
-\begin{equation}
-    \pi_{IJ}^{(1)} = \pi_{IJ}^{(N-1)}  =  \frac{\polyProb\pi_I\pi_J r_{IJ}}{\Klmh (2 + \psi)}
-\end{equation}
-
-The mid-frequency diallelic state: 
-\begin{equation}
-    \pi_{IJ}^{(N/2)} = \frac{\polyProb\pi_I\pi_J r_{IJ}\psi}{\Klmh (2 + \psi)} 
-\end{equation}
-
-
-All elements of $Q$ are 0 between ``non-adjacent'' states are 0.
-
-The diagonal element of the $Q$ matrix is the negative sum of the other elements.
-
-The rate of mutation to introduce state $J$:
-
-In PoMo this includes a factor of $N$, but in our parameterization with $\phi$ as a free parameter, the effect of $N$ simply changes the MLE of $\phi$.
-
-Exploiting time-reversibility:
+Once again drift without mutation occurs between ``adjacent'' states with symmetric rate factor $\rho$:
 \begin{eqnarray}
-    Q_{IJ}^{N,N-1} & = & \pi_J r_{IJ} \nonumber\\
-    & = & \pi_{IJ}^{(N-1)} r_{IJ}^{N, N-1} \nonumber\\
+   Q_{N-1,1,0,0}^{N/2,N/2,0,0} = Q_{1,N-1,0,0}^{N/2,N/2,0,0} & = & \frac{\polyProb\pi_A\pi_G r_{AG}\psi \rho}{K_2 (2 + \psi)} \\
+   Q_{N/2,N/2,0,0}^{N-1,1,0,0} = Q_{N/2,N/2,0,0}^{1,N-1,0,0} & = & \frac{\polyProb\pi_A\pi_G r_{AG} \rho}{K_2 (2 + \psi)}
 \end{eqnarray}
-which enables us to solve for the reversible factor in the introduction/loss of polymorphism
+for the 3-allele state:
 \begin{eqnarray}
-  r_{IJ}^{N, N-1} & = & \frac{\pi_J r_{IJ}}{ \pi_{IJ}^{(N-1)}} \nonumber\\
-  & = & \frac{\pi_J r_{IJ}\Klmh (2 + \psi)}{ \polyProb\pi_I\pi_J r_{IJ}} \nonumber \\
-  & = & \frac{\Klmh (2 + \psi)}{ \polyProb\pi_I}
+   Q_{N-2,1,1,0}^{N/3,N/3,N/3,0} & = & Q_{1,N-2,1,0}^{N/3,N/3,N/3,0} = Q_{1,1,N-2,0}^{N/3,N/3,N/3,0} \nonumber \\
+   & = & \frac{\phi^2\pi_A\pi_C\pi_G \left(r_{AC}r_{AG} + r_{CG}r_{AC} + r_{AG}r_{CG} \right)\psi\rho}{K_3\left(3 + \psi\right)}
+\end{eqnarray}
+\begin{eqnarray}
+   Q_{N-2,1,1,0}^{N/3,N/3,N/3,0} & = & Q_{1,N-2,1,0}^{N/3,N/3,N/3,0} = Q_{1,1,N-2,0}^{N/3,N/3,N/3,0} \nonumber \\
+   & = & \frac{\phi^2\pi_A\pi_C\pi_G \left(r_{AC}r_{AG} + r_{CG}r_{AC} + r_{AG}r_{CG} \right)\rho}{K_3\left(3 + \psi\right)}
 \end{eqnarray}
 
-So the loss of  $J$ to become monomorphic for state $I$ is
-\begin{eqnarray}
-   Q_{IJ}^{N-1,N} & = & r_{IJ}^{N, N-1} \pi_{IJ}^{(N)} \nonumber \\
-    & = & \frac{\Klmh (2 + \psi)}{ \polyProb\pi_I} \pi_I (1 -\phi) \nonumber \\
-    & = & \frac{(1 -\phi) \Klmh (2 + \psi)}{ \polyProb}
-\end{eqnarray}
-
-The transitions between the polymorphic states is determined by the new drift parameter:
-\begin{eqnarray}
-   Q_{IJ}^{N-1,N/2} = Q_{IJ}^{1,N/2} & = & \frac{\polyProb\pi_I\pi_J r_{IJ}\psi \rho}{\Klmh (2 + \psi)} \\
-   Q_{IJ}^{N/2,N-1} = Q_{IJ}^{N/2,1} & = & \frac{\polyProb\pi_I\pi_J r_{IJ} \rho}{\Klmh (2 + \psi)} 
-\end{eqnarray}
 
 \bibliographystyle{splncs03}
 \bibliography{pomo}
