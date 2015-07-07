@@ -261,6 +261,18 @@ for the 3-allele state:
 \end{eqnarray}
 
 
+For the 4-allelic mutation (illustrated with a 3-allelic (mainly A, some C, some G) state to the addition of T):
+\begin{eqnarray}
+    Q_{N-2,1,1,0}^{N-3,1,1,1} & = & \frac{(N-2)\mu_{AT}}{N} \nonumber \\
+     & = &  \frac{(N-1)\pi_T r_{AT}}{N} \\
+     & = & \pi_{N-3, 1, 1, 1}r_{N-2,1,1,0}^{N-3,1,1,1} \nonumber\\
+    r_{N-2,1,1,0}^{N-3,1,1,1} & = & \frac{(N-2)\pi_T r_{AT}}{N\pi_{N-3, 1, 1, 1}} \nonumber\\
+            & = & \frac{(N-2)\pi_T r_{AT}(4 + \psi)}{N\phi^3}\\
+    Q_{N-3,1,1,1}^{N-2,1,1,0} & = & \pi_{N-2, 1, 1, 0}r_{N-2,1,1,0}^{N-3,1,1,1} \nonumber \\
+    & = &  \left(\frac{\phi^2\pi_A\pi_C\pi_G \left(r_{AC}r_{AG} + r_{AC}r_{CG} + r_{AG}r_{CG} \right)}{K_3\left(3 + \psi\right)}\right)\left(\frac{(N-2)\pi_T r_{AT}(4 + \psi)}{N\phi^3}\right) \nonumber \\
+    & = & \frac{(N-2)(4 + \psi)\pi_A\pi_C\pi_G \pi_Tr_{AT}\left(r_{AC}r_{AG} + r_{AC}r_{CG} + r_{AG}r_{CG} \right)}{N\phi K_3\left(3 + \psi\right)} 
+\end{eqnarray}
+
 \bibliographystyle{splncs03}
 \bibliography{pomo}
 
