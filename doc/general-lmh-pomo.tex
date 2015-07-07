@@ -181,6 +181,70 @@ could allow mutations from $(N/2, N/2, 0, 0)$ to lead to $((N-2)/2, 1, 1, 0)$ an
 This corresponds to a new mutation and fair amount of drift in one event.
 
 One could also consider other mutation+drift events like $(N/2, N/2, 0, 0)\rightarrow(N/3, N/3, N/3, 0)$
+
+\subsubsection*{State frequencies}
+
+The equil. frequency of bein monorphic for state $I$is
+\begin{equation}
+    \pi_I f_1 = \pi_I \left(1 - \phi - \phi^2 - \phi^3\right)
+\begin{equation}
+
+The normalizing constant for comparing the frequencies of 2-allele states becomes:
+\begin{equation}
+    K_2 = \sum_I\sum_{J > I}\pi_I\pi_J r_{IJ}
+\end{equation}
+and the frequency of having $N-1$ copies of $I$ and 1 copy of $J$ 
+is equal to $N-1$ copies of $J$ and 1 copy of $I$.
+Both states are expected at:
+\begin{equation}
+\frac{\phi\pi_I\pi_J r_{IJ}}{K_2\left(2 + \psi\right)}.
+\end{equation}
+while the frequency of the state corresponding to $N/2$ copies of both $I$ and $J$ is:
+\begin{equation}
+\frac{\phi\pi_I\pi_J r_{IJ}\psi}{K_2\left(2 + \psi\right)}.
+\end{equation}
+
+Generalizing the idea that all 3 of the low-low-high combinations for a particular triplet of nucleotides ($I$, $J$, and $K$)
+will have the same frequency we find:
+\begin{equation}
+    K_3 = \sum_I\sum_{J > I}\pi_I\pi_J\pi_K \left(r_{IJ}r_{IK} + r_{IJ}r_{JK} + r_{IK}r_{JK} \right)
+\end{equation}
+The low-low-high combination will occur at:
+\begin{equation}
+\frac{\phi^2\pi_I\pi_J\pi_K \left(r_{IJ}r_{IK} + r_{IJ}r_{JK} + r_{IK}r_{JK} \right)}{K_3\left(3 + \psi\right)}.
+\end{equation}
+and the mid-mid-mid combination will be at:
+\begin{equation}
+\frac{\phi^2\pi_I\pi_J\pi_K \left(r_{IJ}r_{IK} + r_{IJ}r_{JK} + r_{IK}r_{JK} \right)\psi}{K_3\left(3 + \psi\right)}.
+\end{equation}
+
+And for the 4-allele states, the low-low-low-high states occur at:
+\begin{equation}
+\frac{\phi^3}{\left(4 + \psi\right)}.
+\end{equation}
+and the all-four-equally-frequent state is at:
+\begin{equation}
+\frac{\phi^3 \psi}{\left(4 + \psi\right)}.
+\end{equation}
+
+
+\subsubsection*{Rates of interchange}
+The transitions between the diallelic states and either the monomorphic or diallelic states are 
+covered in the lmh-pomo doc.
+
+For the diallelic, to 3-allelic, we demonstrate with one case (a new G allele for a population that had more A's than C):
+\begin{eqnarray}
+    Q_{N-1,1,0,0}^{N-2,1,1,0} & = & \frac{(N-1)\mu_{AG}}{N} \nonumber \\
+     & = &  \frac{(N-1)\pi_G r_{AG}}{N} \\
+     & = & \pi_{N-2, 1, 1, 0}r_{N-1,1,0,0}^{N-2,1,1,0} \nonumber\\
+    r_{N-1,1,0,0}^{N-2,1,1,0} & = & \frac{(N-1)\pi_G r_{AG}}{N\pi_{N-2, 1, 1, 0}} \nonumber\\
+            & = & \frac{(N-1)\pi_G r_{AG}K_3\left(3 + \psi\right)}{N\left[\phi^2\pi_A\pi_C\pi_G \left(r_{AC}r_{AG} + r_{AC}r_{CG} + r_{AG}r_{CG} \right)\right]} \nonumber\\
+            & = & \frac{(N-1) r_{AG}K_3\left(3 + \psi\right)}{N\phi^2\pi_A\pi_C \left(r_{AC}r_{AG} + r_{AC}r_{CG} + r_{AG}r_{CG} \right)} \\
+    Q_{N-2,1,1,0}^{N-1,1,0,0} & = & \pi_{N-1, 1, 0, 0}r_{N-1,1,0,0}^{N-2,1,1,0} \nonumber \\
+    & = &  \left(\frac{\phi\pi_A\pi_C r_{AC}}{K_2\left(2 + \psi\right)}\right)\left(\frac{(N-1) r_{AG}K_3\left(3 + \psi\right)}{N\phi^2\pi_A\pi_C \left(r_{AC}r_{AG} + r_{AC}r_{CG} + r_{AG}r_{CG} \right)}} \right) \nonumber \\
+     & = & \frac{(N-1)K_3\left(3 + \psi\right)r_{AG}r_{AC}}{NK_2 \left(2 + \psi\right)\phi\left(r_{AC}r_{AG} + r_{AC}r_{CG} + r_{AG}r_{CG} \right)}
+\end{eqnarray}
+
 \bibliographystyle{splncs03}
 \bibliography{pomo}
 
@@ -201,6 +265,8 @@ The normalizing constant for comparing the frequencies of different polymorphic 
 \begin{equation}
     \Klmh = \sum_I\sum_{J > I}\pi_I\pi_J r_{IJ}
 \end{equation}
+
+
 such that:
     $$\Pr(\mbox{polymorphic for }I, J \mid \mbox{polymorphic}) = \frac{\pi_I\pi_J r_{IJ}}{\Klmh}$$
 
@@ -229,9 +295,7 @@ All elements of $Q$ are 0 between ``non-adjacent'' states are 0.
 The diagonal element of the $Q$ matrix is the negative sum of the other elements.
 
 The rate of mutation to introduce state $J$:
-\begin{equation}
-   Q_{IJ}^{N,N-1} = \mu_{IJ} = \pi_J r_{IJ}.
-\end{equation}
+
 In PoMo this includes a factor of $N$, but in our parameterization with $\phi$ as a free parameter, the effect of $N$ simply changes the MLE of $\phi$.
 
 Exploiting time-reversibility:
