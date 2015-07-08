@@ -33,7 +33,8 @@ _decoders = {1: _decode_1,
              4: _decode_4,
             }
 
-
+def debug(m):
+  sys.stderr.write(m + '\n')
 class GLMHPomoState(object):
   def __init__(self, code=None, A=None, C=None, G=None, T=None):
     self.index = None
@@ -154,9 +155,14 @@ class GLMHPomoModel(object):
           fp =  F[i]*F[j]*F[k]
           rs = sum_of_rate_pair_products(R, i, j, k)
           self.K3 += fp*rs
-
     self.f1, self.f2, self.f3, self.f4 = f1, f2, f3, f4
     self.drift_rate = params['drift_rate']
+    debug('K2 = {}'.format(self.K2))
+    debug('K3 = {}'.format(self.K3))
+    debug('f1 = {}'.format(self.f1))
+    debug('f2 = {}'.format(self.f2))
+    debug('f3 = {}'.format(self.f3))
+    debug('f4 = {}'.format(self.f4))
   def calc_instantaneous_rate(self, from_state, to_state):
     if not from_state.is_adjacent(to_state):
       return 0.0
@@ -167,7 +173,8 @@ class GLMHPomoModel(object):
       assert new_nuc_idx != from_nuc_idx
       rev_mat_rate = self.rev_mat[new_nuc_idx][from_nuc_idx]
       dest_freq = self.nuc_freqs[new_nuc_idx]
-      return rev_mat_rate*dest_freq
+      cardinality_factor = float(N + 1 - from_state.num_alleles)/N
+      return rev_mat_rate*dest_freq*cardinality_factor
     elif diff_num_alleles == -1:
       lost_nuc_ind = from_state.new_allele_idx(to_state)
       if to_state.num_alleles == 1:
@@ -225,7 +232,7 @@ class GLMHPomoModel(object):
         q_el = self.calc_instantaneous_rate(from_state, to_state)
         row[to_ind] = q_el
         row_sum += q_el
-      row[to_ind] = -row_sum
+      row[from_ind] = -row_sum
     return q
   def state_freqs(self):
     S = self.S
@@ -258,6 +265,11 @@ class GLMHPomoModel(object):
       else:
         sf[s_ind] = c
     return sf
+  def prob_mat(self, edge_len):
+      q = self.q_mat()
+      npq = np.mat(q)
+      scaled = edge_len*npq
+      return linalg.expm(scaled)
 params = {}
 params['nuc_freqs'] = [0.1, 0.2, 0.3, 0.4]
 params['gtr_rates'] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
@@ -267,14 +279,34 @@ params['drift_rate'] = 200.0 # should be >> than GTR rates
 model = GLMHPomoModel(**params)
 
 
+psf = model.state_freqs()
+#print 'state freqs: ', psf
+print sum(psf)
 q = model.q_mat()
-for i, row in enumerate(q):
+'''for i, row in enumerate(q):
   rs = '   '.join(['{:10.4f}'.format(el) for el in row])
   label = 'Q[{}][*] ='.format(model.S[i])
   print '{:10} {}'.format(label, rs)
-psf = model.state_freqs()
-print 'state freqs: ', psf
-print sum(psf)
+  print sum(row)
+'''
+for i in xrange(model.S.num_states):
+  for j in xrange(i + 1, model.S.num_states):
+    f = psf[i]*q[i][j]
+    r = psf[j]*q[j][i]
+    if abs(f - r) > 1e-6:
+      print model.S[i], 'freq = ', psf[i], ' q out = ', q[i][j], ' r_out', q[i][j]/psf[j], ' flux_out =', f
+      print model.S[j], 'freq = ', psf[j], ' q out = ', q[j][i], ' r_out', q[j][i]/psf[i], ' flux_out =', r
+      print model.S[j], psf[i], psf[j], q[i][j], q[j][i], f, r
+      print ' diff =', f - r
+      sys.exit(1)
+
+edge_len = float(sys.argv[1])
+p = model.prob_mat(edge_len)
+for i, row in enumerate(p):
+  rs = '   '.join(['{:10.4f}'.format(el) for el in row])
+  label = 'Pr[{}][*] ='.format(model.S[i])
+  print '{:10} {}'.format(label, rs)
+
 """
 class S:
   '''State ordering'''
