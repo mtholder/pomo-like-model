@@ -252,13 +252,14 @@ Once again drift without mutation occurs between ``adjacent'' states with symmet
 \end{eqnarray}
 for the 3-allele state:
 \begin{eqnarray}
-   Q_{N-2,1,1,0}^{N/3,N/3,N/3,0} & = & Q_{1,N-2,1,0}^{N/3,N/3,N/3,0} = Q_{1,1,N-2,0}^{N/3,N/3,N/3,0} \nonumber \\
-   & = & \frac{\phi^2\pi_A\pi_C\pi_G \left(r_{AC}r_{AG} + r_{CG}r_{AC} + r_{AG}r_{CG} \right)\psi\rho}{K_3\left(3 + \psi\right)}
+   Q_{\ast}^{N/3,N/3,N/3,0} & = & \frac{\phi^2\pi_A\pi_C\pi_G \left(r_{AC}r_{AG} + r_{CG}r_{AC} + r_{AG}r_{CG} \right)\psi\rho}{K_3\left(3 + \psi\right)}
 \end{eqnarray}
 \begin{eqnarray}
-   Q_{N-2,1,1,0}^{N/3,N/3,N/3,0} & = & Q_{1,N-2,1,0}^{N/3,N/3,N/3,0} = Q_{1,1,N-2,0}^{N/3,N/3,N/3,0} \nonumber \\
+   Q_{\ast}^{N-2,1,1,0} & = & Q_{\ast}^{1,N-2,1,0} = Q_{\ast}^{1, 1, N-2,0} \nonumber \\
    & = & \frac{\phi^2\pi_A\pi_C\pi_G \left(r_{AC}r_{AG} + r_{CG}r_{AC} + r_{AG}r_{CG} \right)\rho}{K_3\left(3 + \psi\right)}
 \end{eqnarray}
+where $\ast$ represents any of the start legal start states (having all 3 of the alleles, but in different frequencies than the 
+destination state)
 
 
 For the 4-allelic mutation (illustrated with a 3-allelic (mainly A, some C, some G) state to the addition of T):
@@ -272,6 +273,17 @@ For the 4-allelic mutation (illustrated with a 3-allelic (mainly A, some C, some
     & = &  \left(\frac{\phi^2\pi_A\pi_C\pi_G \left(r_{AC}r_{AG} + r_{AC}r_{CG} + r_{AG}r_{CG} \right)}{K_3\left(3 + \psi\right)}\right)\left(\frac{(N-2)\pi_T r_{AT}(4 + \psi)}{N\phi^3}\right) \nonumber \\
     & = & \frac{(N-2)(4 + \psi)\pi_A\pi_C\pi_G \pi_Tr_{AT}\left(r_{AC}r_{AG} + r_{AC}r_{CG} + r_{AG}r_{CG} \right)}{N\phi K_3\left(3 + \psi\right)} 
 \end{eqnarray}
+
+The drift transitions for the 4-allele condition are:
+\begin{eqnarray}
+   Q_{\ast}^{N/4,N/4,N/4,N/4} & = & \frac{\phi^3\psi\rho}{4 + \psi}
+\end{eqnarray}
+\begin{eqnarray}
+   Q_{\ast}^{N-3,1,1,1}  & = & \frac{\phi^3\rho}{4 + \psi}
+\end{eqnarray}
+where $\ast$ represents any of the start legal start states (having all 4 of the alleles, but in different frequencies than the 
+destination state)
+
 
 \bibliographystyle{splncs03}
 \bibliography{pomo}
