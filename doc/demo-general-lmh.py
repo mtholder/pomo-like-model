@@ -58,7 +58,7 @@ class GLMHPomoState(object):
       self._is_mid_freq = True
     count_nuc_pairs = []
     self.allele2count = self._n_vec
-    for n, c in enumerate(self._n_vec)
+    for n, c in enumerate(self._n_vec):
       count_nuc_pairs.append((c, n))
     count_nuc_pairs.sort()
     self.most_common_allele_idx = count_nuc_pairs[-1][1]
@@ -74,7 +74,22 @@ class GLMHPomoState(object):
     d = list(self.alleles - from_state.alleles)
     assert len(d) == 1
     return d[0]
-
+  def is_adjacent(self, other):
+    diff_num_alleles = other.num_alleles - self.num_alleles
+    if (diff_num_alleles == 1) or  (diff_num_alleles == -1):
+      if diff_num_alleles > 0:
+        large, smaller = other.alleles, self.alleles
+      else:
+        large, smaller = self.alleles, other.alleles
+      d = large - smaller
+      if len(d) != 1:
+        return False
+      if self._is_mid_freq or other._is_mid_freq:
+        return False
+      return self.most_common_allele_idx == other.most_common_allele_idx
+    elif diff_num_alleles == 0:
+      return self.alleles == other.alleles
+    return False
 class GLMHPomoStateSpace(object):
   def __init__(self):
     codes = 'HML '
