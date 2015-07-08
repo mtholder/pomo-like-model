@@ -227,6 +227,37 @@ class GLMHPomoModel(object):
         row_sum += q_el
       row[to_ind] = -row_sum
     return q
+  def state_freqs(self):
+    S = self.S
+    sf = [0.0]*S.num_states
+    for s_ind in xrange(S.num_states):
+      state = S[s_ind]
+      if state.num_alleles == 1:
+        i = state.alleles_list[0]
+        sf[s_ind] = self.nuc_freqs[i]*self.f1
+        continue
+      if state.num_alleles == 2:
+        i, j = state.alleles_list
+        rf = self.rev_mat[i][j]
+        fp = self.nuc_freqs[i]*self.nuc_freqs[j]
+        numerator = fp*rf*self.f2
+        denominator = self.K2*(2 + self.psi)
+        c = numerator/denominator
+      elif state.num_alleles == 3:
+        i, j, k = state.alleles_list
+        rf = sum_of_rate_pair_products(self.rev_mat, i, j, k)
+        fp = self.nuc_freqs[i]*self.nuc_freqs[j]*self.nuc_freqs[k]
+        numerator = fp*rf*self.f3
+        denominator = self.K3*(3 + self.psi)
+        c = numerator/denominator
+      else:
+        assert state.num_alleles == 4
+        c = self.f4/(4 + self.psi)
+      if state._is_mid_freq:
+        sf[s_ind] = self.psi*c
+      else:
+        sf[s_ind] = c
+    return sf
 params = {}
 params['nuc_freqs'] = [0.1, 0.2, 0.3, 0.4]
 params['gtr_rates'] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
@@ -241,7 +272,9 @@ for i, row in enumerate(q):
   rs = '   '.join(['{:10.4f}'.format(el) for el in row])
   label = 'Q[{}][*] ='.format(model.S[i])
   print '{:10} {}'.format(label, rs)
-
+psf = model.state_freqs()
+print 'state freqs: ', psf
+print sum(psf)
 """
 class S:
   '''State ordering'''
