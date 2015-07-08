@@ -280,7 +280,7 @@ model = GLMHPomoModel(**params)
 
 
 psf = model.state_freqs()
-#print 'state freqs: ', psf
+print 'state freqs: ', psf
 print sum(psf)
 q = model.q_mat()
 '''for i, row in enumerate(q):
