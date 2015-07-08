@@ -50,10 +50,18 @@ class GLMHPomoState(object):
       acgt = [A, C, G, T]
     assert sum(acgt) == N
     self._n_vec = tuple(acgt)
+    self.alleles = set([n for n, i in enumerate(acgt) if i > 0])
+    self.alleles_list = [i for i in self.alleles]
     self._num_alleles = sum([1 for i in self._n_vec if i != 0])
     self._is_mid_freq = False
     if self._num_alleles > 1 and (N/self._num_alleles) in self._n_vec:
       self._is_mid_freq = True
+    count_nuc_pairs = []
+    self.allele2count = self._n_vec
+    for n, c in enumerate(self._n_vec)
+      count_nuc_pairs.append((c, n))
+    count_nuc_pairs.sort()
+    self.most_common_allele_idx = count_nuc_pairs[-1][1]
   @property
   def as_n_vec(self):
     return self._n_vec
@@ -62,6 +70,10 @@ class GLMHPomoState(object):
     return self._num_alleles
   def __str__(self):
     return 'GLMHPomoState(A={}, C={}, G={}, T={})'.format(*self.as_n_vec)
+  def new_allele_idx(self, from_state):
+    d = list(self.alleles - from_state.alleles)
+    assert len(d) == 1
+    return d[0]
 
 class GLMHPomoStateSpace(object):
   def __init__(self):
@@ -80,16 +92,141 @@ class GLMHPomoStateSpace(object):
         else:
           state_codes.add(code)
           all_states.append(x)
-
-    print len(state_codes)
+    #print len(state_codes)
     n_s = [(4 - i.num_alleles, i.as_n_vec, i) for i in all_states]
     n_s.sort(reverse=True)
     self.all_states = [i[2] for i in n_s]
     for n, s in enumerate(all_states):
       s.index = n
-      print n, s
+      #print n, s
+    self.num_states = len(self.all_states)
+  def __getitem__(self, index):
+    return self.all_states[index]
 
-S = GLMHPomoStateSpace()
+
+def sum_of_rate_pair_products(R, i, j, k):
+  return R[i][j]*R[i][k] + R[i][j]*R[j][k] + R[i][k]*R[j][k]
+class GLMHPomoModel(object):
+  def __init__(self, **params):
+    self.S = GLMHPomoStateSpace()
+    self.nuc_freqs = params['nuc_freqs']
+    F = self.nuc_freqs
+    self.nuc_freq_product = F[0]*F[1]*F[2]*F[3]
+    self.gtr_rates = params['gtr_rates']
+    g = self.gtr_rates
+    self.rev_mat = [[None, g[0], g[1], g[2], ],
+                    [g[0], None, g[3], g[4], ],
+                    [g[1], g[3], None, g[5], ],
+                    [g[2], g[4], g[5], None, ],
+                   ]
+    R = self.rev_mat
+    self.prob_diallelic = params['prob_diallelic']
+    self.psi = params['psi']
+    f2 = self.psi
+    f3 = f2*f2
+    f4= f2*f2*f2
+    f1 = 1.0 - f2 -f3 - f4
+    # K_2
+    self.K2 = 0.0
+    for i in xrange(4):
+      for j in xrange(i + 1, 4):
+        self.K2 += F[i]*F[j]*R[i][j]
+    # K_3
+    self.K3 = 0.0
+    for i in xrange(4):
+      for j in xrange(i + 1, 4):
+        for k in xrange(j + 1, 4):
+          fp =  F[i]*F[j]*F[k]
+          rs = sum_of_rate_pair_products(R, i, j, k)
+          self.K3 += fp*rs
+
+    self.f1, self.f2, self.f3, self.f4 = f1, f2, f3, f4
+    self.drift_rate = params['drift_rate']
+  def calc_instantaneous_rate(self, from_state, to_state):
+    if not from_state.is_adjacent(to_state):
+      return 0.0
+    diff_num_alleles = to_state.num_alleles - from_state.num_alleles
+    if diff_num_alleles == 1:
+      new_nuc_idx = to_state.new_allele_idx(from_state)
+      from_nuc_idx = from_state.most_common_allele_idx
+      assert new_nuc_idx != from_nuc_idx
+      rev_mat_rate = self.rev_mat[new_nuc_idx][from_nuc_idx]
+      dest_freq = self.nuc_freqs[new_nuc_idx]
+      return rev_mat_rate*dest_freq
+    elif diff_num_alleles == -1:
+      lost_nuc_ind = from_state.new_allele_idx(to_state)
+      if to_state.num_alleles == 1:
+        return self.f1*self.K2*(2 + self.psi)/self.f2
+      if to_state.num_alleles == 2:
+        i, j = to_state.alleles_list
+        if i != to_state.most_common_allele_idx:
+          assert j == to_state.most_common_allele_idx
+          i, j = j, i
+        k = lost_nuc_ind
+        nrf = self.rev_mat[i][j] * self.rev_mat[i][k]
+        rs = sum_of_rate_pair_products(self.rev_mat, i, j, k)
+        numerator = (N - 1)*self.K3*(3 + self.psi)*nrf
+        denominator = N*self.K2*(2 + self.psi)*self.f2*rs
+        return numerator/denominator
+      assert to_state.num_alleles == 3
+      i, j, k = to_state.alleles_list
+      rs = sum_of_rate_pair_products(self.rev_mat, i, j, k)
+      single_rate_fac = self.rev_mat[to_state.most_common_allele_idx][lost_nuc_ind]
+      numerator = rs*single_rate_fac*self.nuc_freq_product*(4 + self.psi)*(N - 2)
+      denominator = N * self.f2 * self.K3 * (3 + self.psi)
+      return numerator/denominator
+    else:
+      if to_state.num_alleles == 2:
+        i, j = to_state.alleles_list
+        rf = self.rev_mat[i][j]
+        fp = self.nuc_freqs[i]*self.nuc_freqs[j]
+        numerator = self.f2*rf*fp
+        denominator = self.K2*(2 + self.psi)
+      elif to_state.num_alleles == 3:
+        i, j, k = to_state.alleles_list
+        rf = sum_of_rate_pair_products(self.rev_mat, i, j, k)
+        fp = self.nuc_freqs[i]*self.nuc_freqs[j]*self.nuc_freqs[k]
+        numerator = self.f3 * fp * rf
+        denominator = self.K3*(3 + self.psi)
+      else:
+        assert to_state.num_alleles == 4
+        numerator = self.f4
+        denominator = (4 + self.psi)
+      c = numerator/denominator
+      c *= self.drift_rate
+      if to_state._is_mid_freq:
+        return c * self.psi
+      return c
+  def q_mat(self):
+    S = self.S
+    q = [[0]*S.num_states for i in xrange(S.num_states)]
+    for from_ind, row in enumerate(q):
+      from_state = S[from_ind]
+      row_sum = 0.0
+      for to_ind in xrange(S.num_states):
+        if to_ind == from_ind:
+          continue
+        to_state = S[to_ind]
+        q_el = self.calc_instantaneous_rate(from_state, to_state)
+        row[to_ind] = q_el
+        row_sum += q_el
+      row[to_ind] = -row_sum
+    return q
+params = {}
+params['nuc_freqs'] = [0.1, 0.2, 0.3, 0.4]
+params['gtr_rates'] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+params['prob_diallelic'] = 0.01 # Equil. prob. being diallelic
+params['psi'] = 0.1 # psi/(2 + psi) = conditional prob of being in 50/50 mid point given dialllelic
+params['drift_rate'] = 200.0 # should be >> than GTR rates 
+model = GLMHPomoModel(**params)
+
+
+q = model.q_mat()
+for i, row in enumerate(q):
+  rs = '   '.join(['{:10.4f}'.format(el) for el in row])
+  label = 'Q[{}][*] ='.format(model.S[i])
+  print '{:10} {}'.format(label, rs)
+
 """
 class S:
   '''State ordering'''
@@ -243,12 +380,6 @@ def lmh_pomo_prob(params, edge_len):
   return linalg.expm(scaled)
 
 
-params = {}
-params['NUC_FREQ'] = [0.1, 0.2, 0.3, 0.4]
-params['GTR_RATE'] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-params['PROB_DIALLELIC'] = 0.01 # Equil. prob. being diallelic
-params['PSI'] = 0.1 # psi/(2 + psi) = conditional prob of being in 50/50 mid point given dialllelic
-params['DRIFT_RATE'] = 200.0 # should be >> than GTR rates 
 
 q = lmh_pomo_qmat(params)
 for i, row in enumerate(q):
