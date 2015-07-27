@@ -19,12 +19,12 @@
 \newcommand{\numSp}{\ensuremath{M}}
 \newcommand{\numObsStates}{\ensuremath{k}}
 \newcommand{\virtPopSize}{\ensuremath{N}}
-\newcommand{\polyProb}{\ensuremath{\phi}}}
-\newcommand{\pomoState}[3]{\ensuremath{\mathcal{S}_{#1#2}^{#3}}}}
-\newcommand{\triPomoState}[5]{\ensuremath{\mathcal{S}_{#1#2#3}^{#4,#5}}}}
-\newcommand{\quadPomoState}[3]{\ensuremath{\mathcal{S}_{\texttt{ACGT}}^{#1,#2,#3}}}}
-\newcommand{\Knorm}{\ensuremath{K}}}
-\newcommand{\Klmh}{\ensuremath{K_{LMH}}}}
+\newcommand{\polyProb}{\ensuremath{\phi}}
+\newcommand{\pomoState}[3]{\ensuremath{\mathcal{S}_{#1#2}^{#3}}}
+\newcommand{\triPomoState}[5]{\ensuremath{\mathcal{S}_{#1#2#3}^{#4,#5}}}
+\newcommand{\quadPomoState}[3]{\ensuremath{\mathcal{S}_{\texttt{ACGT}}^{#1,#2,#3}}}
+\newcommand{\Knorm}{\ensuremath{K}}
+\newcommand{\Klmh}{\ensuremath{K_{LMH}}}
 \newcommand{\pomo}{PoMo\xspace}
 % from http://tex.stackexchange.com/a/33547
 \newcommand{\appropto}{\mathrel{\vcenter{
@@ -32,20 +32,22 @@
                       \propto\cr\noalign{\kern2pt}\sim\cr\noalign{\kern-2pt}}}}}
 \DeclareMathOperator*{\argmax}{\arg\!\max}
 \usepackage{hyperref}
-\hypersetup{backref,  linkcolor=blue, citecolor=red, colorlinks=true, hyperindex=true}
-%
+\hypersetup{backref, linkcolor=blue, citecolor=red, colorlinks=true, hyperindex=true}
+
+
 \begin{document}
 \title{A \pomo-like model for large-scale phylogenetics}
 \titlerunning{POMO implementation}
 \author{Mark T.~Holder\inst{1,2}\and Alexandros Stamatakis\inst{1,3}}
 \authorrunning{Author 1 et al.} % abbreviated author list
 %\tocauthor{Author 1, Author 2}
-\institute{1. HITS gGmbH,\\2. Univ.~Kansas\\3. KIT}\\
+\institute{1. HITS gGmbH,\\2. Univ.~Kansas\\3. KIT}
 %\email{\{Authors\}@h-its.org} \and Institute 2,\\ Address, Country\\
 %\email{Author3@h-its.org}}
 %% Eumerating parts in aligned environments %%
-\newcommand\enum{\addtocounter{equation}{1}\tag{\theequation}}
-\maketitle              % typeset the title of the contribution
+%\newcommand{\enum}{\addtocounter{equation}{1}\tag{\theequation}}
+
+%\maketitle              % typeset the title of the contribution
 \section {Motivation}
 Large scale phylogenetic studies feature large numbers of species sampled with relatively few
     individuals sampled per species.
@@ -233,9 +235,9 @@ The variables which appear in the model, but which are not parameters in the sta
 \subsection*{Summarizing $Q$ matrix and state frequency calculations}
 \begin{itemize}
   \item by eqn \ref{polyQPair} for all transitions were $i$ and its neighboring are not $0$ or $N$ we have:
-    $$Q_{IJ}^{i,i+1}  = Q_{IJ}^{i,i-1} & = & \frac{i(N-i)}{N}$$
+    $$Q_{IJ}^{i,i+1} = Q_{IJ}^{i,i-1} = \frac{i(N-i)}{N}$$
   \item by \ref{toDiallelicQEl}, introduction of new allele $I$ (from the state of fixed for $J$) is:
-    $$Q_{IJ}^{0,1} & = & N^2 \pi_I r_{JI} $$ 
+    $$Q_{IJ}^{0,1} = N^2 \pi_I r_{JI} $$ 
   \item by \ref{toMonomorphicQEl}, loss of the only copy of allele $I$ (leaving the population fixed for $J$) is: 
     $$Q_{IJ}^{1,0} =  \frac{\Knorm (1-\polyProb)N(N-1)}{\polyProb }$$
    where $\polyProb$ is a free parameter that is the stationary probability of being in a diallelic state, and (by eqn \ref{KnormDef}):
@@ -245,7 +247,7 @@ The variables which appear in the model, but which are not parameters in the sta
   \item by eqn \ref{monoStateFreq} the frequency of a monomorphic state: 
      $$\pi_{IJ}^{(N)} = \pi_{JI}^{(0)} = \pi_I(1-\polyProb) $$
     \item by eqn \ref{polyStateFreqSimplified} the frequency of a diallelic state: 
-     $$\pi_{IJ}^{(i)} & = & \frac{\polyProb}{\Knorm }\left( \frac{N\pi_I\pi_J r_{IJ}}{i(N-i)}\right) $$
+     $$\pi_{IJ}^{(i)} = \frac{\polyProb}{\Knorm }\left( \frac{N\pi_I\pi_J r_{IJ}}{i(N-i)}\right) $$
 \end{itemize}
 
 \section{Transforming data}
@@ -327,9 +329,6 @@ If $Z_m^{(k)}$ is a monomorphic code for the state $Z_I$ then:
 Note that the $ \virtPopSize^{-S_m^{(k)}}$ factors are constant for all values of $i$, but they 
      {\em cannot} be omitted because it does not occur in the $C_m^{(k)}[I]$ case.
 
-\begin{compactitem}
-\end{compactitem}
-
 \section{To Do}
 \begin{compactitem}
     \item Need to figure out how to scale the matrix to give branch lengths in expected \# subst/site
@@ -389,7 +388,7 @@ Table \ref{taxonomy} shows a taxonomy of \pomo-like models with the following co
 
 \begin{figure}
     \begin{center}
-        \includegraphics[scale=1]{images/10-state.pdf}
+        %\includegraphics[scale=1]{images/10-state.pdf}
         \caption{DiVarAbsRevLow-2-10: Simplest \pomo-like model with just $\virtPopSize=2$. Diallelic states shown as smaller points. Monomorphic states as larger black circles.}\label{pomoDiVarAbsRevLow}
     \end{center}
 \end{figure}
@@ -443,13 +442,13 @@ Because this coarse binning breaks the tight connections with the population gen
   \item The simplification of the normalizing constant is:
   $$\Klmh = \sum_I\sum_{J > I}\pi_I\pi_J r_{IJ}$$
   \item A low- or high-frequency diallelic state: 
-     $$\pi_{IJ}^{(1)} = \pi_{IJ}^{(N-1)} & = & \frac{\polyProb}{\Klmh }\left( \frac{\pi_I\pi_J r_{IJ}}{2 + \psi}\right) $$
+     $$\pi_{IJ}^{(1)} = \pi_{IJ}^{(N-1)}  =  \frac{\polyProb}{\Klmh }\left( \frac{\pi_I\pi_J r_{IJ}}{2 + \psi}\right) $$
   \item the mid-frequency diallelic state: 
-     $$\pi_{IJ}^{(N/2)} & = & \frac{\polyProb}{\Klmh }\left( \frac{\pi_I\pi_J r_{IJ}\psi}{2 + \psi}\right) $$
+     $$\pi_{IJ}^{(N/2)} =  \frac{\polyProb}{\Klmh }\left( \frac{\pi_I\pi_J r_{IJ}\psi}{2 + \psi}\right) $$
   \item by eqn \ref{polyQPair} for all transitions were $i$ and its neighboring are not $0$ or $N$ we have:
     $$Q_{IJ}^{lm}  $$
   \item by \ref{toDiallelicQEl}, introduction of new allele $I$ (from the state of fixed for $J$) is:
-    $$Q_{IJ}^{0,1} & = & N^2 \pi_I r_{JI} $$ 
+    $$Q_{IJ}^{0,1} = N^2 \pi_I r_{JI} $$ 
   \item by \ref{toMonomorphicQEl}, loss of the only copy of allele $I$ (leaving the population fixed for $J$) is: 
     $$Q_{IJ}^{1,0} =  \frac{\Knorm (1-\polyProb)N(N-1)}{\polyProb }$$
    where $\polyProb$ is a free parameter that is the stationary probability of being in a diallelic state, and (by eqn \ref{KnormDef}):
