@@ -409,58 +409,7 @@ Table \ref{taxonomy} shows a taxonomy of \pomo-like models with the following co
 
 \newpage
 \section*{low-,mid-,high- binning}
-In the context of deeper-time phylogenetics, the time scale of drift
-    is expected to be much faster than the mutation rate.
-With the exception of the very short branches of tree, the increase
-    in state-space caused by relatively fine-scaled binning of frequencies
-    into $N+1$ bins seems like it could be overkill.
-
-One could simplify the model as follows:
-\begin{compactitem}
-    \item $N$ is a fixed-by-the-user virtual population size.
-    \item In the diallelic condition, the first allele in the subscript is binned into $l$ (low = $1/N$), $m$ (mid=0.5), and $h$ (high= $(N-1)/N$) frequencies
-\end{compactitem}
-the 22 states would be:
-\begin{compactitem}
-    \item The 4 monomorphic states: $S_{A\ast}^{(N)}, S_{C\ast}^{(N)}, S_{G\ast}^{(N)}, $and $ S_{T\ast}^{(N)}$.
-    \item The 18 dimorphic states. For the 6 pairs of nucleotides, there would be 3 polymorphic bins: $S_{AC}^{(1)}, S_{AC}^{(N/2)}, S_{AC}^{(N-1)}$.
-\end{compactitem}
-
-
-Because this coarse binning breaks the tight connections with the population genetics underpinning, one could estimate an extra parameter to generate the state frequencies, and $Q$ matrix:
-\begin{compactitem}
-    \item The 3 free parameters needed to yield the 4 equilibrium frequency of the mutation process: $1 = \pi_A + \pi_C + \pi_G + \pi_T$
-    \item The 5 free parameters needed to yield the 6 symmetric factors of the GTR rate matrix:  $\{r_{AC}$, $r_{AG}$, $r_{AT}$, $r_{CG}$, $r_{CT}$, $r_{GT}\}$
-    \item $\phi$ the equilibrium probability of being in the diallelic state, and
-    \item a new frequency parameter, $\psi = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(N-1)} = \pi_{IJ}^{(N/2)}/\pi_{IJ}^{(1)}$; This govens the relative abundance of the mid-frequency bin states. 
-    \item a new symmetric rate factor: $r_{lm} = r_{mh}$
-\end{compactitem}
-
-\subsection*{Summarizing $Q$ matrix and state frequency calculations for LMH-PoMo}
-\begin{itemize}
-  \item Monomorphic state freq: $$\pi_{IJ}^{(N)} = \pi_{JI}^{(0)} = \pi_I(1-\polyProb) $$
-  \item The simplification of the normalizing constant is:
-  $$\Klmh = \sum_I\sum_{J > I}\pi_I\pi_J r_{IJ}$$
-  \item A low- or high-frequency diallelic state: 
-     $$\pi_{IJ}^{(1)} = \pi_{IJ}^{(N-1)}  =  \frac{\polyProb}{\Klmh }\left( \frac{\pi_I\pi_J r_{IJ}}{2 + \psi}\right) $$
-  \item the mid-frequency diallelic state: 
-     $$\pi_{IJ}^{(N/2)} =  \frac{\polyProb}{\Klmh }\left( \frac{\pi_I\pi_J r_{IJ}\psi}{2 + \psi}\right) $$
-  \item by eqn \ref{polyQPair} for all transitions were $i$ and its neighboring are not $0$ or $N$ we have:
-    $$Q_{IJ}^{lm}  $$
-  \item by \ref{toDiallelicQEl}, introduction of new allele $I$ (from the state of fixed for $J$) is:
-    $$Q_{IJ}^{0,1} = N^2 \pi_I r_{JI} $$ 
-  \item by \ref{toMonomorphicQEl}, loss of the only copy of allele $I$ (leaving the population fixed for $J$) is: 
-    $$Q_{IJ}^{1,0} =  \frac{\Knorm (1-\polyProb)N(N-1)}{\polyProb }$$
-   where $\polyProb$ is a free parameter that is the stationary probability of being in a diallelic state, and (by eqn \ref{KnormDef}):
-    $$\Knorm = N\left[\sum_{i=1}^{N-1} \frac{1}{i(N-i)}\right]\left(\sum_I \sum_{J > I}\pi_I\pi_J r_{IJ}\right) $$
-  \item The diagonal elements are -1 times the sum of all elements in that row.
-  \item all other elements of $Q$ are 0.
-  \item by eqn \ref{monoStateFreq} the frequency of a monomorphic state: 
-     $$\pi_{IJ}^{(N)} = \pi_{JI}^{(0)} = \pi_I(1-\polyProb) $$
-    \item by eqn \ref{polyStateFreqSimplified} 
-\end{itemize}
-
-
+See the lmh-pomo.tex and general-lmh-pomo.tex notes for some elaborations.
 
 \bibliographystyle{splncs03}
 \bibliography{pomo}
