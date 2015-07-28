@@ -13,6 +13,11 @@ try:
     NUM_POLY_BINS_PER_DIALLELE = VIRTUAL_POP_SIZE - 1
 except:
     sys.exit('Expecting the first argument to be the virtual population size (must be > 1)')
+try:
+    edge_len = float(sys.argv[2])
+    assert edge_len >= 0.0
+except:
+    sys.exit('Expecting the second argument to be an edge length (must be >= 0.0)')
 
 NUM_POMO_STATES = 4 + 6 * NUM_POLY_BINS_PER_DIALLELE
 
@@ -40,50 +45,106 @@ for pair, value in DIALLELIC_PAIRS.TO_CLASS_INDEX.items():
         S.STATES[s_index] = name
 
 print '\n'.join(['{} {}'.format(i, s) for i, s in enumerate(S.STATES)])
-sys.exit(0)
 
-S.POLY_LOOKUP[S.A] = {S.C: [S.AH_CL, S.AM_CM, S.AL_CH, ],
-                      S.G: [S.AH_GL, S.AM_GM, S.AL_GH, ],
-                      S.T: [S.AH_TL, S.AM_TM, S.AL_TH, ],
-                     }
-S.POLY_LOOKUP[S.C] = {S.A: [S.AL_CH, S.AM_CM, S.AH_CL, ],
-                      S.G: [S.CH_GL, S.CM_GM, S.CL_GH, ],
-                      S.T: [S.CH_TL, S.CM_TM, S.CL_TH, ],
-                     }
-S.POLY_LOOKUP[S.G] = {S.A: [S.AL_GH, S.AM_GM, S.AH_GL, ],
-                      S.C: [S.CL_GH, S.CM_GM, S.CH_GL, ],
-                      S.T: [S.GH_TL, S.GM_TM, S.GL_TH, ],
-                     }
-S.POLY_LOOKUP[S.T] = {S.A: [S.AL_TH, S.AM_TM, S.AH_TL, ],
-                      S.C: [S.CL_TH, S.CM_TM, S.CH_TL, ],
-                      S.G: [S.GL_TH, S.GM_TM, S.GH_TL, ],
-                     }
+params = {}
+params['NUC_FREQ'] = [0.1, 0.2, 0.3, 0.4]
+params['GTR_RATE'] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+params['PROB_POLY'] = 0.01 # Equil. prob. being polymorphic
 
-def lmh_pomo_qmat(params):
-  nuc_freqs = params['NUC_FREQ']
-  assert min(nuc_freqs) > 0.0
-  assert abs(sum(nuc_freqs) - 1) < TOL
-  gtr_rates = params['GTR_RATE']
-  assert min(gtr_rates) > 0.0
-  prob_poly = params['PROB_POLY']
-  assert prob_poly > 0.0
-  assert prob_poly < 1.0
-  mid_freq_param = params['PSI']
-  assert mid_freq_param > 0.0
-  drift_rate = params['DRIFT_RATE']
-  assert drift_rate > 0.0
-
-  two_plus_psi = 2.0 + mid_freq_param
-  freq_for_bins_given_poly = [1/two_plus_psi, mid_freq_param/two_plus_psi, 1/two_plus_psi]
-
-  pi_A, pi_C, pi_G, pi_T = nuc_freqs
-  r_AC, r_AG, r_AT, r_CG, r_CT, r_GT = gtr_rates
-  
-  sym_mu_mat = [[None, r_AC, r_AG, r_AT],
+def neut_pomo_qmat(params):
+    nuc_freqs = params['NUC_FREQ']
+    assert min(nuc_freqs) > 0.0
+    assert abs(sum(nuc_freqs) - 1) < TOL
+    gtr_rates = params['GTR_RATE']
+    assert min(gtr_rates) > 0.0
+    prob_poly = params['PROB_POLY']
+    assert prob_poly > 0.0
+    assert prob_poly < 1.0
+    poly_transform = (1 - prob_poly)/prob_poly
+    pi_A, pi_C, pi_G, pi_T = nuc_freqs
+    r_AC, r_AG, r_AT, r_CG, r_CT, r_GT = gtr_rates
+    sym_mu_mat = [[None, r_AC, r_AG, r_AT],
                 [r_AC, None, r_CG, r_CT],
                 [r_AG, r_CG, None, r_GT],
                 [r_AT, r_CT, r_GT, None],
                ]
+    # calculate the K normalizing factor
+    K = VIRTUAL_POP_SIZE
+    s = 0.0
+    for i in range(1, VIRTUAL_POP_SIZE):
+        s += 1.0 / float(i*(VIRTUAL_POP_SIZE - i))
+    K *= s
+    f = 0.0
+    for i in range(4):
+        for j in range(i + 1, 4):
+            f += nuc_freqs[i]*nuc_freqs[j]*sym_mu_mat[i][j]
+    K *= f
+    # END of caluculate K normalizing factor
+    
+    q = [[0]* NUM_POMO_STATES for i in range(NUM_POMO_STATES)]
+    for i in range(NUM_POMO_STATES):
+        i_is_mono = S.is_monomorphic(i)
+        if not i_is_mono:
+            i_diallele = S.diallele_category(i)
+        for j in range(NUM_POMO_STATES):
+            if i == j:
+                continue # diagonal is handled in the loop below
+            q_el = 0.0
+            j_is_mono = S.is_monomorphic(j)
+            if not j_is_mono:
+                j_diallele = S.diallele_category(j)
+            if i_is_mono:
+                if not j_is_mono:
+                    i_count_in_j = S.diallele_count(j_diallele, i)
+                    if i_count_in_j == NUM_POLY_BINS_PER_DIALLELE:
+                        # i-> j is new mutation (eqn 18)
+                        mut = S.other_allele(j_diallele, i)
+                        r = sym_mu_mat[i][mut]
+                        f = nuc_freqs[mut]
+                        q_el = VIRTUAL_POP_SIZE*VIRTUAL_POP_SIZE*r*f
+            else:
+                if j_is_mono:
+                    j_count_in_i = S.diallele_count(i_diallele, j)
+                    if j_count_in_i != 1:
+                        # i -> j is a loss of an allelle (eqn 21)
+                        q_el = K * poly_transform*VIRTUAL_POP_SIZE*(VIRTUAL_POP_SIZE - 1)
+                elif j_allele == i_diallele:
+                    i_count_in_i = S.diallele_count(i_diallele, i)
+                    j_count_in_i = S.diallele_count(i_diallele, j)
+                    diff = i_count_in_i - j_count_in_i
+                    if (diff == 1) or (diff == -1):
+                        # drift. eqn 14
+                        q_el = i_count_in_i * (VIRTUAL_POP_SIZE - i_count_in_i)/float(VIRTUAL_POP_SIZE)
+            q[i][j] = q_el
+    for i in range(NUM_POMO_STATES):
+        row_sum = sum(q[i])
+        q[i][i] = -row_sum
+    return q
+
+def neut_pomo_prob(params, edge_len):
+  q = neut_pomo_qmat(params)
+  npq = np.mat(q)
+  scaled = edge_len*npq
+  return linalg.expm(scaled)
+
+q = neut_pomo_qmat(params)
+for i, row in enumerate(q):
+  rs = '   '.join(['{:10.4f}'.format(el) for el in row])
+  label = 'Q[{} ({})][*] ='.format(i, S.STATES[i])
+  print '{:10} {}'.format(label, rs)
+
+p = neut_pomo_prob(params, edge_len)
+for i, row in enumerate(p):
+  rs = '   '.join(['{:10.4f}'.format(el) for el in row])
+  label = 'P[{}][*] ='.format(i)
+  print '{:10} {}'.format(label, rs)
+
+sys.exit(0)
+
+def lmh_pomo_qmat(params):
+  two_plus_psi = 2.0 + mid_freq_param
+  freq_for_bins_given_poly = [1/two_plus_psi, mid_freq_param/two_plus_psi, 1/two_plus_psi]
+
   raw_mat = [[0.0]*NUM_POMO_STATES for i in range(NUM_POMO_STATES)]
   mono_over_poly = (1.0 - prob_poly)/prob_poly
   K = 0.0
@@ -158,32 +219,3 @@ def lmh_pomo_qmat(params):
   return raw_mat
 
 
-
-def lmh_pomo_prob(params, edge_len):
-  q = lmh_pomo_qmat(params)
-  npq = np.mat(q)
-  scaled = edge_len*npq
-  return linalg.expm(scaled)
-
-
-params = {}
-params['NUC_FREQ'] = [0.1, 0.2, 0.3, 0.4]
-params['GTR_RATE'] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-params['PROB_POLY'] = 0.01 # Equil. prob. being polymorphic
-params['PSI'] = 0.1 # psi/(2 + psi) = conditional prob of being in 50/50 mid point given polymorphic
-params['DRIFT_RATE'] = 200.0 # should be >> than GTR rates 
-
-q = lmh_pomo_qmat(params)
-for i, row in enumerate(q):
-  rs = '   '.join(['{:10.4f}'.format(el) for el in row])
-  label = 'Q[{}][*] ='.format(i)
-  print '{:10} {}'.format(label, rs)
-
-print
-import sys
-edge_len = float(sys.argv[1])
-p = lmh_pomo_prob(params, edge_len)
-for i, row in enumerate(p):
-  rs = '   '.join(['{:10.4f}'.format(el) for el in row])
-  label = 'P[{}][*] ='.format(i)
-  print '{:10} {}'.format(label, rs)
