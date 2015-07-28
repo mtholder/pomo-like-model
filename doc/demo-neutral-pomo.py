@@ -26,10 +26,42 @@ class DIALLELIC_PAIRS:
   TO_CLASS_INDEX = {'AC': 0, 'AG': 1, 'AT': 2, 'CG': 3, 'CT': 4, 'GT': 5}
 
 class S:
-  '''State ordering'''
-  A, C, G, T = range(4)
-  STATES = [None]*NUM_POMO_STATES
-  POLY_LOOKUP = {}
+    '''State ordering'''
+    A, C, G, T = range(4)
+    STATES = [None]*NUM_POMO_STATES
+    POLY_LOOKUP = {}
+    @staticmethod
+    def is_monomorphic(i):
+        return i < 4
+    @staticmethod
+    def diallele_category(i):
+        ofs = i - 4 # subtract off the 4 mono states
+        return ofs // NUM_POLY_BINS_PER_DIALLELE
+    @staticmethod
+    def diallele_count(di_state, diallele_pair_code, single):
+        diallele_letters = DIALLELIC_PAIRS.ORDERING[diallele_pair_code]
+        single_letter = S.STATES[single]
+        ofs = di_state - 4 # subtract off the 4 mono states
+        num_second = 1 + (ofs % VIRTUAL_POP_SIZE)
+        num_first = VIRTUAL_POP_SIZE - num_second
+        if single_letter == diallele_letters[0]:
+            return num_first
+        elif single_letter == diallele_letters[1]:
+            return num_second
+        return 0
+    @staticmethod
+    def other_allele_letter(diallele_pair_code, single):
+        diallele_letters = DIALLELIC_PAIRS.ORDERING[diallele_pair_code]
+        single_letter = S.STATES[single]
+        if single_letter == diallele_letters[0]:
+            return diallele_letters[1]
+        else:
+            assert single_letter == diallele_letters[1]
+            return diallele_letters[0]
+    @staticmethod
+    def other_allele(diallele_pair_code, single):
+        l = S.other_allele_letter(diallele_pair_code, single)
+        return 'ACGT'.index(l)
 
 for nuc in 'ACGT':
     S.STATES[S.__dict__[nuc]] = nuc
@@ -95,7 +127,7 @@ def neut_pomo_qmat(params):
                 j_diallele = S.diallele_category(j)
             if i_is_mono:
                 if not j_is_mono:
-                    i_count_in_j = S.diallele_count(j_diallele, i)
+                    i_count_in_j = S.diallele_count(j, j_diallele, i)
                     if i_count_in_j == NUM_POLY_BINS_PER_DIALLELE:
                         # i-> j is new mutation (eqn 18)
                         mut = S.other_allele(j_diallele, i)
@@ -104,13 +136,13 @@ def neut_pomo_qmat(params):
                         q_el = VIRTUAL_POP_SIZE*VIRTUAL_POP_SIZE*r*f
             else:
                 if j_is_mono:
-                    j_count_in_i = S.diallele_count(i_diallele, j)
+                    j_count_in_i = S.diallele_count(i, i_diallele, j)
                     if j_count_in_i != 1:
                         # i -> j is a loss of an allelle (eqn 21)
                         q_el = K * poly_transform*VIRTUAL_POP_SIZE*(VIRTUAL_POP_SIZE - 1)
-                elif j_allele == i_diallele:
-                    i_count_in_i = S.diallele_count(i_diallele, i)
-                    j_count_in_i = S.diallele_count(i_diallele, j)
+                elif j_diallele == i_diallele:
+                    i_count_in_i = S.diallele_count(i, i_diallele, i)
+                    j_count_in_i = S.diallele_count(i, i_diallele, j)
                     diff = i_count_in_i - j_count_in_i
                     if (diff == 1) or (diff == -1):
                         # drift. eqn 14
