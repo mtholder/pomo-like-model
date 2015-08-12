@@ -183,7 +183,7 @@ def neut_pomo_qmat(params):
             else:
                 if j_is_mono:
                     j_count_in_i = S.diallele_count(i, i_diallele, j)
-                    if j_count_in_i == 1:
+                    if j_count_in_i == VIRTUAL_POP_SIZE - 1:
                         # i -> j is a loss of an allelle (eqn 21)
                         q_el = K * poly_transform*VIRTUAL_POP_SIZE*(VIRTUAL_POP_SIZE - 1)
                 elif j_diallele == i_diallele:
