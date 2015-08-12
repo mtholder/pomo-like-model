@@ -6,7 +6,7 @@ class NUC:
   A, C, G, T = range(4)
 class GTR_RATE:
   AC, AG, AT, CG, CT, GT = range(6)
-  
+
 try:
     VIRTUAL_POP_SIZE = int(sys.argv[1])
     assert VIRTUAL_POP_SIZE > 1
@@ -38,11 +38,16 @@ class S:
         ofs = i - 4 # subtract off the 4 mono states
         return ofs // NUM_POLY_BINS_PER_DIALLELE
     @staticmethod
+    def diallele_pair_code_to_single_codes(diallele_pair_code):
+        f, s = DIALLELIC_PAIRS.ORDERING[diallele_pair_code]
+        return S.STATES[f], S.STATES[s]
+    
+    @staticmethod
     def diallele_count(di_state, diallele_pair_code, single):
         diallele_letters = DIALLELIC_PAIRS.ORDERING[diallele_pair_code]
         single_letter = S.STATES[single]
-        ofs = di_state - 4 # subtract off the 4 mono states
-        num_second = 1 + (ofs % VIRTUAL_POP_SIZE)
+        ofs = (di_state - 4) % (VIRTUAL_POP_SIZE - 1)
+        num_second = 1 + ofs
         num_first = VIRTUAL_POP_SIZE - num_second
         if single_letter == diallele_letters[0]:
             return num_first
@@ -83,6 +88,25 @@ params['NUC_FREQ'] = [0.1, 0.2, 0.3, 0.4]
 params['GTR_RATE'] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
 params['PROB_POLY'] = 0.1 # Equil. prob. being polymorphic
 
+def calc_K(virtual_pop_size, nuc_freqs, sym_mu_mat):
+    K = virtual_pop_size
+    s = 0.0
+    for i in range(1, virtual_pop_size):
+        s += 1.0 / float(i*(virtual_pop_size - i))
+    K *= s
+    f = 0.0
+    for i in range(4):
+        for j in range(i + 1, 4):
+            f += nuc_freqs[i]*nuc_freqs[j]*sym_mu_mat[i][j]
+    K *= f
+    return K
+
+def set_q_diagonal(q):
+    for i in range(len(q)):
+        q[i][i] = 0.0
+        row_sum = sum(q[i])
+        q[i][i] = -row_sum
+
 def neut_pomo_qmat(params):
     nuc_freqs = params['NUC_FREQ']
     assert min(nuc_freqs) > 0.0
@@ -100,19 +124,7 @@ def neut_pomo_qmat(params):
                 [r_AG, r_CG, None, r_GT],
                 [r_AT, r_CT, r_GT, None],
                ]
-    # calculate the K normalizing factor
-    K = VIRTUAL_POP_SIZE
-    s = 0.0
-    for i in range(1, VIRTUAL_POP_SIZE):
-        s += 1.0 / float(i*(VIRTUAL_POP_SIZE - i))
-    K *= s
-    f = 0.0
-    for i in range(4):
-        for j in range(i + 1, 4):
-            f += nuc_freqs[i]*nuc_freqs[j]*sym_mu_mat[i][j]
-    K *= f
-    # END of caluculate K normalizing factor
-    
+    K = calc_K(VIRTUAL_POP_SIZE, nuc_freqs, sym_mu_mat)
     q = [[0]* NUM_POMO_STATES for i in range(NUM_POMO_STATES)]
     for i in range(NUM_POMO_STATES):
         i_is_mono = S.is_monomorphic(i)
@@ -128,6 +140,7 @@ def neut_pomo_qmat(params):
             if i_is_mono:
                 if not j_is_mono:
                     i_count_in_j = S.diallele_count(j, j_diallele, i)
+                    print 'i,j,i_count_in_j,j_diallele = ', i, j, i_count_in_j, j_diallele
                     if i_count_in_j == NUM_POLY_BINS_PER_DIALLELE:
                         # i-> j is new mutation (eqn 18)
                         mut = S.other_allele(j_diallele, i)
@@ -141,16 +154,16 @@ def neut_pomo_qmat(params):
                         # i -> j is a loss of an allelle (eqn 21)
                         q_el = K * poly_transform*VIRTUAL_POP_SIZE*(VIRTUAL_POP_SIZE - 1)
                 elif j_diallele == i_diallele:
-                    i_count_in_i = S.diallele_count(i, i_diallele, i)
-                    i_count_in_j = S.diallele_count(j, i_diallele, i)
+                    pc = S.diallele_pair_code_to_single_codes(i_diallele)
+                    f = pc[0]
+                    i_count_in_i = S.diallele_count(i, i_diallele, f)
+                    i_count_in_j = S.diallele_count(j, i_diallele, f)
                     diff = i_count_in_i - i_count_in_j
                     if (diff == 1) or (diff == -1):
                         # drift. eqn 14
                         q_el = i_count_in_i * (VIRTUAL_POP_SIZE - i_count_in_i)/float(VIRTUAL_POP_SIZE)
             q[i][j] = q_el
-    for i in range(NUM_POMO_STATES):
-        row_sum = sum(q[i])
-        q[i][i] = -row_sum
+    set_q_diagonal(q)
     return q
 
 def neut_pomo_prob(params, edge_len):
@@ -162,11 +175,12 @@ def neut_pomo_prob(params, edge_len):
 q = neut_pomo_qmat(params)
 for i, row in enumerate(q):
   rs = '   '.join(['{:10.4f}'.format(el) for el in row])
-  label = 'Q[{} ({})][*] ='.format(i, S.STATES[i])
+  label = 'Q[{} ({})][*] ='.format(i, S.STATES[i]).ljust(16)
   print '{:10} {}'.format(label, rs)
 
+sys.exit(0)
 p = neut_pomo_prob(params, edge_len)
 for i, row in enumerate(p):
   rs = '   '.join(['{:10.4f}'.format(el) for el in row])
-  label = 'P[{}][*] ='.format(i)
+  label = 'P[{}][*] ='.format(i).ljust(16)
   print '{:10} {}'.format(label, rs)
