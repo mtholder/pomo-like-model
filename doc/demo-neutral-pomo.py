@@ -140,7 +140,7 @@ def neut_pomo_qmat(params):
             if i_is_mono:
                 if not j_is_mono:
                     i_count_in_j = S.diallele_count(j, j_diallele, i)
-                    print 'i,j,i_count_in_j,j_diallele = ', i, j, i_count_in_j, j_diallele
+                    #print 'i,j,i_count_in_j,j_diallele = ', i, j, i_count_in_j, j_diallele
                     if i_count_in_j == NUM_POLY_BINS_PER_DIALLELE:
                         # i-> j is new mutation (eqn 18)
                         mut = S.other_allele(j_diallele, i)
@@ -150,7 +150,7 @@ def neut_pomo_qmat(params):
             else:
                 if j_is_mono:
                     j_count_in_i = S.diallele_count(i, i_diallele, j)
-                    if j_count_in_i != 1:
+                    if j_count_in_i == 1:
                         # i -> j is a loss of an allelle (eqn 21)
                         q_el = K * poly_transform*VIRTUAL_POP_SIZE*(VIRTUAL_POP_SIZE - 1)
                 elif j_diallele == i_diallele:
