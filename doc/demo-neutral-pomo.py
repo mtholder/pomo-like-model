@@ -128,6 +128,18 @@ def calc_state_freq(K, prob_poly, virtual_pop_size, nuc_freqs, sym_mu_mat):
     assert abs(tp - 1.0) < 1e-8
     return sf
 
+def check_time_reversibility(q, state_freq):
+    assert len(q) == len(state_freq)
+    for i in range(len(q)):
+        for j in range(len(q)):
+            fwd = state_freq[i]*q[i][j]
+            rev = state_freq[j]*q[j][i]
+            if abs(fwd - rev) > 1e-7:
+                print 'state_freq[{i}]*q[{i}][{j}] != state_freq[{j}]*q[{j}][{i}]'.format(i=i, j=j)
+                print '{f} * {q} != {r} * {z}'.format(f=state_freq[i], q=q[i][j], r=state_freq[j], z=q[j][i])
+                print '{f} != {r}'.format(f=fwd, r=rev)
+                assert abs(fwd - rev) < 1e-7
+
 def neut_pomo_qmat(params):
     nuc_freqs = params['NUC_FREQ']
     assert min(nuc_freqs) > 0.0
@@ -186,6 +198,7 @@ def neut_pomo_qmat(params):
             q[i][j] = q_el
     set_q_diagonal(q)
     state_freq = calc_state_freq(K, prob_poly, VIRTUAL_POP_SIZE, nuc_freqs, sym_mu_mat)
+    check_time_reversibility(q, state_freq)
     return q
 
 def neut_pomo_prob(params, edge_len):
