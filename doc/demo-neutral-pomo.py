@@ -178,7 +178,6 @@ for i, row in enumerate(q):
   label = 'Q[{} ({})][*] ='.format(i, S.STATES[i]).ljust(16)
   print '{:10} {}'.format(label, rs)
 
-sys.exit(0)
 p = neut_pomo_prob(params, edge_len)
 for i, row in enumerate(p):
   rs = '   '.join(['{:10.4f}'.format(el) for el in row])
