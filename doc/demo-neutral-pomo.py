@@ -40,7 +40,7 @@ class S:
     @staticmethod
     def diallele_pair_code_to_single_codes(diallele_pair_code):
         f, s = DIALLELIC_PAIRS.ORDERING[diallele_pair_code]
-        return S.STATES[f], S.STATES[s]
+        return S.STATES.index(f), S.STATES.index(s)
     
     @staticmethod
     def diallele_count(di_state, diallele_pair_code, single):
@@ -107,6 +107,27 @@ def set_q_diagonal(q):
         row_sum = sum(q[i])
         q[i][i] = -row_sum
 
+def calc_state_freq(K, prob_poly, virtual_pop_size, nuc_freqs, sym_mu_mat):
+    sf = [0.0] * NUM_POMO_STATES
+    poly_coeff = prob_poly*virtual_pop_size/K
+    for i in xrange(NUM_POMO_STATES):
+        if S.is_monomorphic(i):
+            sf[i] = nuc_freqs[i]*(1 - prob_poly)
+        else:
+            i_diallele = S.diallele_category(i)
+            pc = S.diallele_pair_code_to_single_codes(i_diallele)
+            f, s = pc
+            i_count_in_i = S.diallele_count(i, i_diallele, f)
+            nmi = virtual_pop_size - i_count_in_i
+            assert nmi > 0
+            assert i_count_in_i > 0
+            denom = nmi * i_count_in_i
+            sf[i] = poly_coeff * nuc_freqs[f] * nuc_freqs[s] * sym_mu_mat[f][s]/denom
+    tp = sum(sf)
+    print 
+    assert abs(tp - 1.0) < 1e-8
+    return sf
+
 def neut_pomo_qmat(params):
     nuc_freqs = params['NUC_FREQ']
     assert min(nuc_freqs) > 0.0
@@ -164,6 +185,7 @@ def neut_pomo_qmat(params):
                         q_el = i_count_in_i * (VIRTUAL_POP_SIZE - i_count_in_i)/float(VIRTUAL_POP_SIZE)
             q[i][j] = q_el
     set_q_diagonal(q)
+    state_freq = calc_state_freq(K, prob_poly, VIRTUAL_POP_SIZE, nuc_freqs, sym_mu_mat)
     return q
 
 def neut_pomo_prob(params, edge_len):
