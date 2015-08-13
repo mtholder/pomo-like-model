@@ -250,6 +250,53 @@ The variables which appear in the model, but which are not parameters in the sta
      $$\pi_{IJ}^{(i)} = \frac{\polyProb}{\Knorm }\left( \frac{N\pi_I\pi_J r_{IJ}}{i(N-i)}\right) $$
 \end{itemize}
 
+\section{Scaling the matrix}
+Under neutrality, the mutation rate equals the substitution root.
+However, the approximations involved in the version of \pomo described here, 
+    it is not the case that flux out of a monomorphic state equals the flux
+    of substitutions.
+
+If we want the branch lengths to be expressed in terms of the expected substitutions
+    per site, we will need to scale the rate matrix so that the
+    rate of mutations that are expected to fix out of the 
+    monomorphic states is 1.0.
+
+High rates of mutation should increase the probability of a site being polymorphic.
+Thus a theoretically justifiable model of among site rate variation would involve
+    a different $\polyProb$ for each rate category.
+However, that would lead to a rate-specific state-frequency spectrum, which would
+    require summing over states at the root of the tree before summing over rate 
+    categories.
+This would not be hard to do, but I do not think that it is the way the ExaML works now.
+So, the first attempt will keep $\polyProb$ constant and just scale the branch lengths.
+
+\subsection{Scaling while treating $\polyProb$ as fixed}
+The transitions that exit the monomorphic states represent the new mutations.
+However, the result of subsequent transitions could result in the loss of the 
+    new mutant nucleotide rather than a substitution.
+
+
+If $i$ represents the number of copies of the mutant nucleotide in the diallelic
+state (out of a virtual population size of $N$), then $\theta_i^{(N)}$ will
+represent the probability that a character in this 
+state will fix the novel nucleotide.
+
+The general approach to scaling the matrix so that branches are scaled in terms of
+    expected number of substitutions per site would be to calculate the unscaled
+    flux of novel alleles that will fix:
+\begin{equation}
+U = \sum_{I \in \{A,C,G,T\}}\pi_{I\ast}^{(N)}\left[\sum_{J\neq I}Q_{IJ}^{N,N-1}\theta_1^{(N)}\right]
+\end{equation}
+and then dividing every element in the $Q$ matrix by $U$.
+
+Note that the loss of an allele (either the loss of the new allele or the 
+    loss of the ancestral allele) is associated with the same rate constant, which we will
+    abbreviate:
+    $$\ell = \frac{\Knorm (1-\polyProb)N(N-1)}{\polyProb }$$
+
+For $N=2$ both of the exit transitions occur at the same rate, so $\theta_1^{(2)} = \frac{\ell}{2\ell} = \frac{1}{2}$.
+Thus to calculate the out-flux of the matrix, one would 
+
 \section{Transforming data}
 We have sample $M$ species, and have $S_m$ individuals sampled from species $m$.
 Assuming that each site is a random draw from the species current state is simple, though it ignores
@@ -329,10 +376,6 @@ If $Z_m^{(k)}$ is a monomorphic code for the state $Z_I$ then:
 Note that the $ \virtPopSize^{-S_m^{(k)}}$ factors are constant for all values of $i$, but they 
      {\em cannot} be omitted because it does not occur in the $C_m^{(k)}[I]$ case.
 
-\section{To Do}
-\begin{compactitem}
-    \item Need to figure out how to scale the matrix to give branch lengths in expected \# subst/site
-\end{compactitem}
 
 \section{Some generalizations}
 A generalization to multi-allelic sites is fairly straightforward, leading to a 14-state
