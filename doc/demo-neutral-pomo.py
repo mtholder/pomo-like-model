@@ -86,7 +86,9 @@ print '\n'.join(['{} {}'.format(i, s) for i, s in enumerate(S.STATES)])
 params = {}
 params['NUC_FREQ'] = [0.1, 0.2, 0.3, 0.4]
 params['GTR_RATE'] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
-params['PROB_POLY'] = 0.1 # Equil. prob. being polymorphic
+params['PROB_POLY'] = 0.01 # Equil. prob. being polymorphic
+params['USE_INTRINSIC_PROB_POLY'] = False
+params['MEAN_MUT_RATE'] = 1.0
 
 def calc_K(virtual_pop_size, nuc_freqs, sym_mu_mat):
     K = virtual_pop_size
@@ -106,6 +108,25 @@ def set_q_diagonal(q):
         q[i][i] = 0.0
         row_sum = sum(q[i])
         q[i][i] = -row_sum
+
+def calc_prob_mutant_fixes(K, prob_poly, N):
+    d = (N - 1.0) / float(N)
+    ell = K * (1.0 - prob_poly) * N * (N - 1) / prob_poly
+    theta_one = d / ((2 * d) + ((N - 2.0) * ell))
+    print 'theta_one = ', theta_one
+    return theta_one
+
+def calc_subst_rate(K, prob_poly, virtual_pop_size, U_GTR):
+    frac_singletons_fix = calc_prob_mutant_fixes(K, prob_poly, virtual_pop_size)
+    omp = 1.0 - prob_poly
+    n_sq = virtual_pop_size * virtual_pop_size
+    print 'n_sq =', n_sq
+    print 'omp =', omp
+    print 'frac_singletons_fix =', frac_singletons_fix
+    print 'U_GTR =', U_GTR
+    U = n_sq * omp * frac_singletons_fix * U_GTR
+    print 'U =', U
+    return U
 
 def calc_state_freq(K, prob_poly, virtual_pop_size, nuc_freqs, sym_mu_mat):
     sf = [0.0] * NUM_POMO_STATES
@@ -139,6 +160,23 @@ def check_time_reversibility(q, state_freq):
                 print '{f} * {q} != {r} * {z}'.format(f=state_freq[i], q=q[i][j], r=state_freq[j], z=q[j][i])
                 print '{f} != {r}'.format(f=fwd, r=rev)
                 assert abs(fwd - rev) < 1e-7
+def calc_U_GTR(nuc_freqs, r_mat):
+    '''Calc the flux out of current state under the GTR model.'''
+    U_GTR = 0.0
+    for i, src_freq in enumerate(nuc_freqs):
+        row_sum = 0.0
+        r_mat_row = r_mat[i]
+        for j, dest_freq in enumerate(nuc_freqs):
+            if i != j:
+                row_sum += dest_freq * r_mat_row[j]
+        U_GTR = src_freq * row_sum
+    print 'U_GTR =', U_GTR
+    return U_GTR
+
+def multiple_elements(mat, scalar):
+    for row in mat:
+        for ind in range(len(row)):
+            row[ind] *= scalar
 
 def neut_pomo_qmat(params):
     nuc_freqs = params['NUC_FREQ']
@@ -146,18 +184,33 @@ def neut_pomo_qmat(params):
     assert abs(sum(nuc_freqs) - 1) < TOL
     gtr_rates = params['GTR_RATE']
     assert min(gtr_rates) > 0.0
-    prob_poly = params['PROB_POLY']
+    mean_mut_rate = params.get('MEAN_MUT_RATE', 1.0)
+    assert mean_mut_rate > 0.0
+    mean_branch_rate = params.get('MEAN_BRANCH_RATE', 1.0)
+    assert mean_mut_rate > 0.0
+    pi_A, pi_C, pi_G, pi_T = nuc_freqs
+    r_AC, r_AG, r_AT, r_CG, r_CT, r_GT = gtr_rates
+    sym_mu_mat = [[0.0, r_AC, r_AG, r_AT],
+                [r_AC, 0.0, r_CG, r_CT],
+                [r_AG, r_CG, 0.0, r_GT],
+                [r_AT, r_CT, r_GT, 0.0],
+               ]
+    print 'sym_mu_mat =', sym_mu_mat
+    # scale so that `GTR_RATE` just gives *relative* rates, and
+    #   `MEAN_RATE` provides the mean rate of substitution
+    U_GTR = calc_U_GTR(nuc_freqs, sym_mu_mat)
+    multiple_elements(sym_mu_mat, mean_mut_rate/U_GTR)
+    assert abs(calc_U_GTR(nuc_freqs, sym_mu_mat) - mean_mut_rate) < 1e-6
+    print 'rel_mu_mat =', sym_mu_mat
+    K = calc_K(VIRTUAL_POP_SIZE, nuc_freqs, sym_mu_mat)
+    if params.get('USE_INTRINSIC_PROB_POLY', False):
+        k_n_sq = K * VIRTUAL_POP_SIZE * VIRTUAL_POP_SIZE
+        prob_poly = k_n_sq / (1.0 + k_n_sq)
+    else:
+        prob_poly = params['PROB_POLY']
     assert prob_poly > 0.0
     assert prob_poly < 1.0
     poly_transform = (1 - prob_poly)/prob_poly
-    pi_A, pi_C, pi_G, pi_T = nuc_freqs
-    r_AC, r_AG, r_AT, r_CG, r_CT, r_GT = gtr_rates
-    sym_mu_mat = [[None, r_AC, r_AG, r_AT],
-                [r_AC, None, r_CG, r_CT],
-                [r_AG, r_CG, None, r_GT],
-                [r_AT, r_CT, r_GT, None],
-               ]
-    K = calc_K(VIRTUAL_POP_SIZE, nuc_freqs, sym_mu_mat)
     q = [[0]* NUM_POMO_STATES for i in range(NUM_POMO_STATES)]
     for i in range(NUM_POMO_STATES):
         i_is_mono = S.is_monomorphic(i)
@@ -197,6 +250,18 @@ def neut_pomo_qmat(params):
                         q_el = i_count_in_i * (VIRTUAL_POP_SIZE - i_count_in_i)/float(VIRTUAL_POP_SIZE)
             q[i][j] = q_el
     set_q_diagonal(q)
+    U = calc_subst_rate(K, prob_poly, VIRTUAL_POP_SIZE, mean_mut_rate)
+    frac_singletons_fix = calc_prob_mutant_fixes(K, prob_poly, VIRTUAL_POP_SIZE)
+    f_out_cond = [-q[i][i] for i in range(4)]
+    f_out = [nuc_freqs[i]*(1.0 - prob_poly)*f_out_cond[i] for i in range(4)]
+    measured_flux_out = frac_singletons_fix*sum(f_out)
+    print 'f_out_cond =', f_out_cond
+    print 'f_out =', f_out
+    print 'flux out =', measured_flux_out
+    print 'unscaled Q'
+    print_q(q)
+    multiple_elements(q, mean_branch_rate/measured_flux_out)
+    print 'scaled flux out =', sum([nuc_freqs[i]*(1.0 - prob_poly)*q[i][i] for i in range(4)])
     state_freq = calc_state_freq(K, prob_poly, VIRTUAL_POP_SIZE, nuc_freqs, sym_mu_mat)
     check_time_reversibility(q, state_freq)
     return q
@@ -207,12 +272,14 @@ def neut_pomo_prob(params, edge_len):
   scaled = edge_len*npq
   return linalg.expm(scaled)
 
-q = neut_pomo_qmat(params)
-for i, row in enumerate(q):
-  rs = '   '.join(['{:10.4f}'.format(el) for el in row])
-  label = 'Q[{} ({})][*] ='.format(i, S.STATES[i]).ljust(16)
-  print '{:10} {}'.format(label, rs)
+def print_q(q):
+    for i, row in enumerate(q):
+      rs = '   '.join(['{:10.4f}'.format(el) for el in row])
+      label = 'Q[{} ({})][*] ='.format(i, S.STATES[i]).ljust(16)
+      print '{:10} {}'.format(label, rs)
 
+q = neut_pomo_qmat(params)
+print_q(q)
 p = neut_pomo_prob(params, edge_len)
 for i, row in enumerate(p):
   rs = '   '.join(['{:10.4f}'.format(el) for el in row])
