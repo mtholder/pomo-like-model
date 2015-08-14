@@ -284,10 +284,15 @@ state will fix the novel nucleotide.
 The general approach to scaling the matrix so that branches are scaled in terms of
     expected number of substitutions per site would be to calculate the unscaled
     flux of novel alleles that will fix:
-\begin{equation}
-U = \sum_{I \in \{A,C,G,T\}}\pi_{I\ast}^{(N)}\left[\sum_{J\neq I}Q_{IJ}^{N,N-1}\theta_1^{(N)}\right]
-\end{equation}
+\begin{eqnarray}
+ U & = & \sum_{I \in \{A,C,G,T\}}\pi_{I\ast}^{(N)}\left[\sum_{J\neq I}Q_{IJ}^{N,N-1}\theta_1^{(N)}\right] \nonumber \\
+ & = & \sum_{I \in \{A,C,G,T\}} \pi_I(1-\polyProb)\left[\sum_{J\neq I}N^2\pi_J r_{IJ}\theta_1^{(N)}\right] \nonumber\\
+ & = & N^2(1-\polyProb)\theta_1^{(N)}\sum_{I \in \{A,C,G,T\}} \pi_I\left[\sum_{J\neq I}\pi_J r_{IJ}\right] \nonumber\\
+  & = & N^2(1-\polyProb)\theta_1^{(N)}U_{GTR} \\
+  U_{GTR} & = &\sum_{I \in \{A,C,G,T\}} \pi_I\left[\sum_{J\neq I}\pi_J r_{IJ}\right]
+\end{eqnarray}
 and then dividing every element in the $Q$ matrix by $U$.
+$U_{GTR}$ is the scaler for the ``raw'' GTR matrix.
 
 Note that the loss of an allele (either the loss of the new allele or the 
     loss of the ancestral allele) is associated with the same rate constant, which we will
@@ -295,8 +300,35 @@ Note that the loss of an allele (either the loss of the new allele or the
     $$\ell = \frac{\Knorm (1-\polyProb)N(N-1)}{\polyProb }$$
 
 For $N=2$ both of the exit transitions occur at the same rate, so $\theta_1^{(2)} = \frac{\ell}{2\ell} = \frac{1}{2}$.
-Thus to calculate the out-flux of the matrix, one would 
 
+For $N > 2$, the two transitions that can occur to a state with 1 copy of an allele are 
+    loss of the allele (at rate $\ell$) and drift to have two copies of that allele.
+The latter occurs at rate $$d = \frac{N-1}{N}$$
+Thus, the probability that new mutant will fix is:
+\begin{eqnarray}
+    \theta_1^{(N)} = \frac{d\theta_2^{(N)}}{\ell + d} \\
+    \theta_{N-1}^{(N)} = \frac{d\theta_{N-2}^{(N)} + \ell}{\ell + d}
+\end{eqnarray}
+for $N > 3$ and $i \neq 1$ and $i \neq N-1$:
+\begin{eqnarray}
+    \theta_{i}^{(N)} = \frac{\theta_{i-1}^{(N)} + \theta_{i+1}^{(N)}}{2}
+\end{eqnarray}
+
+This leads to the general statement for $N > 1$:
+\begin{eqnarray}
+    \theta_1^{(N)} = \frac{d}{2d + (N-2)\ell}
+\end{eqnarray}
+
+So:
+\begin{eqnarray}
+ U & = &  \frac{dN^2(1-\polyProb)U_{GTR}}{2d + (N-2)\ell} \\
+  & = &  \frac{\frac{N-1}{N}N^2(1-\polyProb)U_{GTR}}{2\frac{N-1}N
+                                                     + (N-2)\frac{\Knorm (1-\polyProb)N(N-1)}{\polyProb }} \\
+  & = &  \frac{\polyProb(N-1)N^2(1-\polyProb)U_{GTR}}{2(N-1)\polyProb
+                                                     + (N-2)\Knorm (1-\polyProb)N^2(N-1)} \\
+  & = &  \frac{\polyProb N^2(1-\polyProb)U_{GTR}}{2\polyProb
+                                                     + (N-2)\Knorm (1-\polyProb)N^2}
+\end{eqnarray}
 \section{Transforming data}
 We have sample $M$ species, and have $S_m$ individuals sampled from species $m$.
 Assuming that each site is a random draw from the species current state is simple, though it ignores
