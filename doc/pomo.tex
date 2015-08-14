@@ -329,6 +329,28 @@ So:
   & = &  \frac{\polyProb N^2(1-\polyProb)U_{GTR}}{2\polyProb
                                                      + (N-2)\Knorm (1-\polyProb)N^2}
 \end{eqnarray}
+
+\subsection{Using the intrinsic, $\polyProb_I$ as a function of mutation rate}
+Alternatively, we could force the loss of an allele rate to be equal to the rate that
+    would be consistent with the fact that this event is simply a drift away from
+    a state with 2 alleles.
+If we solve for the $\polyProb_I$ associated with the unscaled mutation rate, then we
+    can deal with a rate heterogeneity in a way that is more compatible with the 
+    idea of a neutral model.
+
+\begin{eqnarray}
+    \frac{\Knorm (1-\polyProb_I)N(N-1)}{\polyProb_I} & = & \frac{N-1}{N} \nonumber \\
+    \Knorm (1-\polyProb_I)N^2 & = & \polyProb_I \nonumber \\
+    \Knorm N^2 & = & (1 + \Knorm N^2) \polyProb_I \nonumber \\
+    \polyProb_I = \frac{\Knorm N^2}{1 + \Knorm N^2}
+\end{eqnarray}
+
+If we adopt this route, we'd probably want to have a ``raw'' values for $r_{ij}$ which 
+    are then transformed by multiplying them by a $m/U_{GTR}$, where $m$ is the mean
+    mutation rate.
+Then for any rate, $m$, one could solve for $\polyProb_I$, and transform the
+    final $Q$ matrix by multiplying each element by $\frac{m}{U}$.
+
 \section{Transforming data}
 We have sample $M$ species, and have $S_m$ individuals sampled from species $m$.
 Assuming that each site is a random draw from the species current state is simple, though it ignores
